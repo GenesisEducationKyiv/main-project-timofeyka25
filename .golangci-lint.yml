@@ -1,0 +1,30 @@
+run:
+  timeout: 3m
+
+output:
+  format: colored-line-number
+
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - gofumpt
+    - ineffassign
+    - revive
+    - staticcheck
+    - typecheck
+    - misspell
+    - unparam
+    - bodyclose
+    - goerr113
+    - unused
+    - gocyclo
+    - dupl
+    - gomnd
+    - nakedret
+    - funlen
+    - goconst
+    - noctx
