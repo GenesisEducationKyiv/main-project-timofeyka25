@@ -5,6 +5,8 @@ import (
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/repository"
 	"genesis-test/src/config"
+
+	"github.com/pkg/errors"
 )
 
 type newsletterService struct {
@@ -20,10 +22,9 @@ func (m newsletterService) SendEmails() ([]string, error) {
 
 	rate, err := m.repos.Exchange.GetCurrencyRate(cfg.BaseCurrency, cfg.QuoteCurrency)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get rate")
 	}
 
-	// Prepare email body with the currency rate information
 	body := fmt.Sprintf("The current exchange rate of %s to %s is %s %s",
 		rate.BaseCurrency,
 		rate.QuoteCurrency,
@@ -35,15 +36,15 @@ func (m newsletterService) SendEmails() ([]string, error) {
 	return unsent, err
 }
 
-func (m newsletterService) Subscribe(recipient *domain.Subscriber) error {
+func (m newsletterService) Subscribe(subscriber *domain.Subscriber) error {
 	subscribed, err := m.repos.Newsletter.GetSubscribedEmails()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "get emails")
 	}
 
-	err = m.repos.Newsletter.AddNewEmail(subscribed, recipient.Email)
+	err = m.repos.Newsletter.AddNewEmail(subscribed, subscriber.Email)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "add email")
 	}
 
 	return nil

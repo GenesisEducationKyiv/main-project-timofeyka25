@@ -6,7 +6,7 @@ type Subscriber struct {
 
 type NewsletterService interface {
 	SendEmails() ([]string, error)
-	Subscribe(recipient *Subscriber) error
+	Subscribe(subscriber *Subscriber) error
 }
 
 type NewsletterRepository interface {

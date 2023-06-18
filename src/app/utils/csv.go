@@ -3,12 +3,14 @@ package utils
 import (
 	"encoding/csv"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 func WriteToCsv(path string, data []string) error {
 	f, err := os.Create(path)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "create file")
 	}
 	defer func() {
 		err = f.Close()
@@ -19,7 +21,7 @@ func WriteToCsv(path string, data []string) error {
 	for _, v := range data {
 		err = w.Write([]string{v})
 		if err != nil {
-			return err
+			return errors.Wrap(err, "write to csv")
 		}
 	}
 
@@ -29,7 +31,7 @@ func WriteToCsv(path string, data []string) error {
 func ReadAllFromCsvToSlice(path string) ([]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "open file")
 	}
 	defer func(f *os.File) {
 		err = f.Close()
@@ -40,7 +42,7 @@ func ReadAllFromCsvToSlice(path string) ([]string, error) {
 
 	records, err := csvReader.ReadAll()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "read all from csv")
 	}
 
 	for _, record := range records {

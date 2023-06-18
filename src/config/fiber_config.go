@@ -1,13 +1,14 @@
 package config
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"strconv"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func FiberConfig() fiber.Config {
-	readTimeout, _ := strconv.Atoi(cfg.ServerReadTimeout)
+	readTimeout, _ := strconv.Atoi(Get().ServerReadTimeout)
 
 	return fiber.Config{
 		ReadTimeout: time.Second * time.Duration(readTimeout),

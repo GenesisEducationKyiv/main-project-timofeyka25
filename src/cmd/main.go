@@ -5,6 +5,7 @@ import (
 	"genesis-test/src/app/handler/middleware"
 	"genesis-test/src/app/utils"
 	"genesis-test/src/config"
+
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -20,6 +21,5 @@ func main() {
 	middleware.InitMiddleware(app)
 	handler.InitRoutes(app)
 
-	// Start server
 	utils.StartServerWithGracefulShutdown(app)
 }

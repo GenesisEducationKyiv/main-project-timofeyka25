@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"genesis-test/src/app/customerror"
 	"genesis-test/src/app/domain"
-	"genesis-test/src/app/errors"
 	"genesis-test/src/app/service"
-	"github.com/gofiber/fiber/v2"
 	"net/mail"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/pkg/errors"
 )
 
 type NewsletterHandler struct {
@@ -37,17 +39,14 @@ func (h NewsletterHandler) Subscribe(c *fiber.Ctx) error {
 	}
 
 	if _, err := mail.ParseAddress(subscriber.Email); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{errors.ErrInvalidEmail.Error()})
-
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{err.Error()})
 	}
 
 	err := h.services.Newsletter.Subscribe(subscriber)
 	if err != nil {
-		if err == errors.ErrAlreadyExists {
-			// Return status 409 if subscriber already exists
+		if errors.Is(err, customerror.ErrAlreadyExists) {
 			return c.SendStatus(fiber.StatusConflict)
 		}
-		// Return status 500 and error message for other errors
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{err.Error()})
 	}
 
@@ -65,17 +64,14 @@ func (h NewsletterHandler) Subscribe(c *fiber.Ctx) error {
 func (h NewsletterHandler) SendEmails(c *fiber.Ctx) error {
 	unsent, err := h.services.Newsletter.SendEmails()
 	if err != nil {
-		// Return status 400 and error message
 		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{err.Error()})
 	}
 
 	if len(unsent) > 0 {
-		// Return status 200 with the list of unsent recipients
 		return c.JSON(fiber.Map{
 			"unsent": unsent,
 		})
 	}
 
-	// Return status 200 if all subscribers were successfully sent the email
 	return c.SendStatus(fiber.StatusOK)
 }

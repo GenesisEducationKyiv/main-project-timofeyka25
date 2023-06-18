@@ -4,9 +4,10 @@ import (
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/utils"
 	"genesis-test/src/config"
-	"github.com/pkg/errors"
 	"log"
 	"net/smtp"
+
+	"github.com/pkg/errors"
 )
 
 type newsletterRepository struct {
@@ -20,7 +21,8 @@ func NewNewsletterRepository(
 	smtpServer,
 	smtpPort,
 	username,
-	password string) domain.NewsletterRepository {
+	password string,
+) domain.NewsletterRepository {
 	return &newsletterRepository{
 		smtpServer: smtpServer,
 		smtpPort:   smtpPort,
@@ -34,7 +36,7 @@ func (r newsletterRepository) GetSubscribedEmails() ([]string, error) {
 
 	subscribed, err := utils.ReadAllFromCsvToSlice(cfg.StorageFile)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "read csv file")
 	}
 
 	return subscribed, nil
@@ -43,7 +45,7 @@ func (r newsletterRepository) GetSubscribedEmails() ([]string, error) {
 func (r newsletterRepository) SendToSubscribedEmails(subject, body string) ([]string, error) {
 	subscribed, err := r.GetSubscribedEmails()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get emails")
 	}
 
 	unsent := make([]string, 0)
@@ -61,13 +63,11 @@ func (r newsletterRepository) SendToSubscribedEmails(subject, body string) ([]st
 }
 
 func (r newsletterRepository) SendEmail(to, subject, body string) error {
-	// Construct the email message
 	msg := "To: " + to + "\r\n" +
 		"Subject: " + subject + "\r\n" +
 		"\r\n" +
 		body
 
-	// Connect to the SMTP server
 	auth := smtp.PlainAuth("", r.username, r.password, r.smtpServer)
 	address := r.smtpServer + ":" + r.smtpPort
 	err := smtp.SendMail(address, auth, r.username, []string{to}, []byte(msg))
@@ -83,7 +83,7 @@ func (r newsletterRepository) AddNewEmail(emails []string, emailToInsert string)
 
 	emails, err := utils.InsertToSortedSlice(emails, emailToInsert)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "insert email")
 	}
 
 	return utils.WriteToCsv(cfg.StorageFile, emails)

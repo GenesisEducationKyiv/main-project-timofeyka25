@@ -16,10 +16,10 @@ func NewRepositories() *Repositories {
 	return &Repositories{
 		Exchange: NewExchangeRepository(),
 		Newsletter: NewNewsletterRepository(
-			cfg.SmtpServer,
-			cfg.SmtpPort,
-			cfg.SmtpUsername,
-			cfg.SmtpPassword,
+			cfg.SMTPServer,
+			cfg.SMTPPort,
+			cfg.SMTPUsername,
+			cfg.SMTPPassword,
 		),
 	}
 }

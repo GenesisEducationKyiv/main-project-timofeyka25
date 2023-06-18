@@ -2,15 +2,15 @@ package utils
 
 import (
 	"genesis-test/src/config"
-	"github.com/gofiber/fiber/v2"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func StartServerWithGracefulShutdown(app *fiber.App) {
-	// start app
 	go func() {
 		err := app.Listen(config.Get().ServerURL)
 		if err != nil {
@@ -18,7 +18,6 @@ func StartServerWithGracefulShutdown(app *fiber.App) {
 		}
 	}()
 
-	// shutdown app
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	signal.Notify(stop, syscall.SIGTERM)
