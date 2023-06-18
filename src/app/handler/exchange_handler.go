@@ -2,6 +2,7 @@ package handler
 
 import (
 	"genesis-test/src/app/service"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -27,7 +28,6 @@ func NewExchangeHandler(s *service.Services) *ExchangeHandler {
 func (h ExchangeHandler) GetCurrencyRate(c *fiber.Ctx) error {
 	rate, err := h.services.Exchange.GetCurrencyRate()
 	if err != nil {
-		// Return status 400 and error message
 		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{err.Error()})
 	}
 

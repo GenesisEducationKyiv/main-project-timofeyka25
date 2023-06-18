@@ -5,6 +5,8 @@ import (
 	"genesis-test/src/app/repository"
 	"genesis-test/src/config"
 	"strconv"
+
+	"github.com/pkg/errors"
 )
 
 type exchangeService struct {
@@ -21,7 +23,7 @@ func (c exchangeService) GetCurrencyRate() (int, error) {
 	cfg := config.Get()
 	rate, err := c.repos.Exchange.GetCurrencyRate(cfg.BaseCurrency, cfg.QuoteCurrency)
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrap(err, "get rate")
 	}
 
 	return strconv.Atoi(rate.Price)

@@ -1,14 +1,16 @@
 package repository
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"genesis-test/src/app/domain"
 	"genesis-test/src/config"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type exchangeRepository struct{}
@@ -19,15 +21,19 @@ func NewExchangeRepository() domain.ExchangeRepository {
 
 func (e exchangeRepository) GetCurrencyRate(base string, quoted string) (*domain.CurrencyRate, error) {
 	cfg := config.Get()
-	url := fmt.Sprintf(cfg.CryptoApiFormatUrl, base, quoted)
+	url := fmt.Sprintf(cfg.CryptoAPIFormatURL, base, quoted)
 
-	resp, err := http.Get(url)
+	client := http.Client{}
+	req, err := http.NewRequestWithContext(context.Background(), "GET", url, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create HTTP request")
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make HTTP request")
 	}
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-	}(resp.Body)
+	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
