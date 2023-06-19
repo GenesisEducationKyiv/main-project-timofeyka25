@@ -7,16 +7,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-func WriteToCsv(path string, data []string) error {
-	f, err := os.Create(path)
+func WriteToCsv(path string, data []string) (err error) {
+	file, err := os.Create(path)
 	if err != nil {
 		return errors.Wrap(err, "create file")
 	}
-	defer func() {
+	defer func(f *os.File) {
 		err = f.Close()
-	}()
-	w := csv.NewWriter(f)
-	defer w.Flush()
+	}(file)
+	w := csv.NewWriter(file)
 
 	for _, v := range data {
 		err = w.Write([]string{v})
@@ -25,20 +24,21 @@ func WriteToCsv(path string, data []string) error {
 		}
 	}
 
-	return nil
+	defer w.Flush()
+	err = w.Error()
+	return err
 }
 
-func ReadAllFromCsvToSlice(path string) ([]string, error) {
-	f, err := os.Open(path)
+func ReadAllFromCsvToSlice(path string) (data []string, err error) {
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, errors.Wrap(err, "open file")
 	}
 	defer func(f *os.File) {
 		err = f.Close()
-	}(f)
+	}(file)
 
-	var data []string
-	csvReader := csv.NewReader(f)
+	csvReader := csv.NewReader(file)
 
 	records, err := csvReader.ReadAll()
 	if err != nil {
