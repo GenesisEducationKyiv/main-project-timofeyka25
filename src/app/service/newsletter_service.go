@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"genesis-test/src/app/customerror"
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/repository"
 	"genesis-test/src/config"
@@ -31,14 +32,15 @@ func (m newsletterService) SendEmails() ([]string, error) {
 		rate.Price,
 		rate.QuoteCurrency)
 
-	unsent, err := m.repos.Newsletter.SendToSubscribedEmails("Exchange Currency Newsletter", body)
-
-	return unsent, err
+	return m.repos.Newsletter.SendToSubscribedEmails(body)
 }
 
 func (m newsletterService) Subscribe(subscriber *domain.Subscriber) error {
+	if subscriber == nil {
+		return customerror.ErrNoDataProvided
+	}
 	subscribed, err := m.repos.Newsletter.GetSubscribedEmails()
-	if err != nil {
+	if err != nil && !errors.Is(err, customerror.ErrNoSubscribers) {
 		return errors.Wrap(err, "get emails")
 	}
 

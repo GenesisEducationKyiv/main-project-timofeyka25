@@ -4,6 +4,7 @@ import (
 	"genesis-test/src/app/customerror"
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/service"
+	"log"
 	"net/mail"
 
 	"github.com/gofiber/fiber/v2"
@@ -47,6 +48,7 @@ func (h NewsletterHandler) Subscribe(c *fiber.Ctx) error {
 		if errors.Is(err, customerror.ErrAlreadyExists) {
 			return c.SendStatus(fiber.StatusConflict)
 		}
+		log.Println(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{err.Error()})
 	}
 

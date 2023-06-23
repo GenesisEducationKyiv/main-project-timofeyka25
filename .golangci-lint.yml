@@ -31,3 +31,7 @@ linters:
     - errname
     - forbidigo
     - gochecknoglobals
+
+linters-settings:
+  funlen:
+    lines: 80
