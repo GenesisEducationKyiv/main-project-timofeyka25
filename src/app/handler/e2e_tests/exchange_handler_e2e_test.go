@@ -1,7 +1,9 @@
-package handler
+package e2e
 
 import (
-	"genesis-test/src/app/repository"
+	"genesis-test/src/app/domain"
+	"genesis-test/src/app/handler"
+	"genesis-test/src/app/repository/exchange"
 	"genesis-test/src/app/service"
 	"genesis-test/src/config"
 	"io"
@@ -10,9 +12,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/stretchr/testify/require"
 )
 
 func TestExchangeHandler_GetCurrencyRate(t *testing.T) {
@@ -22,14 +23,14 @@ func TestExchangeHandler_GetCurrencyRate(t *testing.T) {
 		expectedStatusCode int
 	}{
 		{
-			name:               "Get rate successful",
-			apiURL:             "https://api.coinbase.com/v2/prices/%s-%s/spot",
-			expectedStatusCode: http.StatusOK,
-		},
-		{
 			name:               "Get rate error (invalid url)",
 			apiURL:             "",
 			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:               "Get rate successful",
+			apiURL:             "https://api.coinbase.com/v2/prices/%s-%s/spot",
+			expectedStatusCode: http.StatusOK,
 		},
 	}
 
@@ -39,9 +40,15 @@ func TestExchangeHandler_GetCurrencyRate(t *testing.T) {
 				t.Fatal("Failed to set CRYPTO_API_FORMAT_URL")
 			}
 			loadEnvironment(t)
-			repos := repository.NewRepositories()
-			services := service.NewServices(repos)
-			exchangeHandler := NewExchangeHandler(services)
+			cfg := config.Get()
+
+			exchangeRepo := exchange.NewExchangeCoinbaseRepository(cfg.CryptoAPIFormatURL)
+			BTCUAHPair := &domain.CurrencyPair{
+				BaseCurrency:  cfg.BaseCurrency,
+				QuoteCurrency: cfg.QuoteCurrency,
+			}
+			exchangeService := service.NewExchangeService(BTCUAHPair, exchangeRepo)
+			exchangeHandler := handler.NewExchangeHandler(exchangeService)
 
 			app := fiber.New(config.FiberConfig())
 			api := app.Group("/api")

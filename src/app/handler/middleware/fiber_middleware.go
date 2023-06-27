@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
-func InitMiddleware(a *fiber.App) {
+func FiberMiddleware(a *fiber.App) {
 	a.Use(
 		cors.New(),
 		logger.New(),

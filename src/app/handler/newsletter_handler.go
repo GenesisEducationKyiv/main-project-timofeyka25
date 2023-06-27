@@ -1,58 +1,19 @@
 package handler
 
 import (
-	"genesis-test/src/app/customerror"
-	"genesis-test/src/app/domain"
-	"genesis-test/src/app/service"
-	"log"
-	"net/mail"
+	"genesis-test/src/app/handler/responses"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/pkg/errors"
 )
 
 type NewsletterHandler struct {
-	services *service.Services
+	service NewsletterService
 }
 
-func NewNewsletterHandler(s *service.Services) *NewsletterHandler {
+func NewNewsletterHandler(s NewsletterService) *NewsletterHandler {
 	return &NewsletterHandler{
-		services: s,
+		service: s,
 	}
-}
-
-// Subscribe
-//
-//	@Summary	Subscribe to newsletter
-//	@Tags		Newsletter
-//	@Param		input	body 	domain.Subscriber true "Email to subscribe"
-//	@Accept		json
-//	@Success	200
-//	@Failure	400	{object}	ErrorResponse
-//	@Failure	409
-//	@Failure	500 {object}	ErrorResponse
-//	@Router		/subscribe [post]
-func (h NewsletterHandler) Subscribe(c *fiber.Ctx) error {
-	subscriber := new(domain.Subscriber)
-
-	if err := c.BodyParser(subscriber); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{err.Error()})
-	}
-
-	if _, err := mail.ParseAddress(subscriber.Email); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{err.Error()})
-	}
-
-	err := h.services.Newsletter.Subscribe(subscriber)
-	if err != nil {
-		if errors.Is(err, customerror.ErrAlreadyExists) {
-			return c.SendStatus(fiber.StatusConflict)
-		}
-		log.Println(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{err.Error()})
-	}
-
-	return c.SendStatus(fiber.StatusOK)
 }
 
 // SendEmails
@@ -64,15 +25,13 @@ func (h NewsletterHandler) Subscribe(c *fiber.Ctx) error {
 //	@Failure	400		{object}	ErrorResponse
 //	@Router		/sendEmails [post]
 func (h NewsletterHandler) SendEmails(c *fiber.Ctx) error {
-	unsent, err := h.services.Newsletter.SendEmails()
+	unsent, err := h.service.SendCurrencyRate()
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(responses.ErrorResponse{Message: err.Error()})
 	}
 
 	if len(unsent) > 0 {
-		return c.JSON(fiber.Map{
-			"unsent": unsent,
-		})
+		return c.JSON(responses.SendRateResponse{UnsentEmails: unsent})
 	}
 
 	return c.SendStatus(fiber.StatusOK)

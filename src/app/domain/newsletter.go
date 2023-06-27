@@ -6,14 +6,7 @@ type Subscriber struct {
 	Email string `json:"email" validate:"required,email"`
 }
 
-type NewsletterService interface {
-	SendEmails() ([]string, error)
-	Subscribe(subscriber *Subscriber) error
-}
-
-type NewsletterRepository interface {
-	GetSubscribedEmails() ([]string, error)
-	SendToSubscribedEmails(body string) ([]string, error)
-	SendEmail(to, body string) error
-	AddNewEmail(emails []string, emailToInsert string) error
+type EmailMessage struct {
+	Subject string
+	Body    string
 }

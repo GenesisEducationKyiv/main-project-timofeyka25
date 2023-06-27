@@ -1,8 +1,7 @@
 package main
 
 import (
-	"genesis-test/src/app/handler"
-	"genesis-test/src/app/handler/middleware"
+	"genesis-test/src/app/route"
 	"genesis-test/src/app/utils"
 	"genesis-test/src/config"
 
@@ -18,8 +17,6 @@ import (
 func main() {
 	app := fiber.New(config.FiberConfig())
 
-	middleware.InitMiddleware(app)
-	handler.InitRoutes(app)
-
+	route.InitRoutes(app)
 	utils.StartServerWithGracefulShutdown(app)
 }
