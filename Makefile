@@ -1,6 +1,14 @@
+PROJECT_DIR = $(shell pwd)
+ENV_TEST_PATH = ${PROJECT_DIR}/.env
+
 .PHONY: start
 start:
 	go run src/cmd/main.go
+
+.PHONY: start_test_server
+start_test_server:
+	#source $(ENV_TEST_PATH); env
+	## go run src/cmd/main.go
 
 .PHONY: gen_docs
 gen_docs:

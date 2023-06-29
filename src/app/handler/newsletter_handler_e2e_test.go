@@ -2,12 +2,11 @@ package handler
 
 import (
 	"bytes"
-	"genesis-test/src/app/repository"
-	"genesis-test/src/app/service"
-	"genesis-test/src/config"
+	"fmt"
+	"genesis-test/src/app/utils"
 	"io"
+	"log"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -16,40 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupEnvironment(t *testing.T) {
-	if err := os.Setenv("STORAGE_FILE_PATH", "../../storage/csv/data_test.csv"); err != nil {
-		t.Fatal("Failed to set STORAGE_FILE_PATH")
-	}
-	if err := os.Setenv("SMTP_SERVER", "sandbox.smtp.mailtrap.io"); err != nil {
-		t.Fatal("Failed to set SMTP_SERVER")
-	}
-	if err := os.Setenv("SMTP_PORT", "2525"); err != nil {
-		t.Fatal("Failed to set SMTP_PORT")
-	}
-	if err := os.Setenv("SMTP_USERNAME", "baac2a76689b33"); err != nil {
-		t.Fatal("Failed to set SMTP_USERNAME")
-	}
-	if err := os.Setenv("SMTP_PASSWORD", "3b9561ea1b84ff"); err != nil {
-		t.Fatal("Failed to set SMTP_PASSWORD")
-	}
-}
-
-func loadEnvironment(t *testing.T) {
-	if err := godotenv.Load("../../../.env"); err != nil {
-		t.Fatal("Failed to load .env file")
-	}
-}
-
 func TestNewsletterHandler_Subscribe(t *testing.T) {
-	setupEnvironment(t)
 	loadEnvironment(t)
-	repos := repository.NewRepositories()
-	services := service.NewServices(repos)
-	newsletterHandler := NewNewsletterHandler(services)
-
-	app := fiber.New(config.FiberConfig())
-	api := app.Group("/api")
-	api.Post("/subscribe", newsletterHandler.Subscribe)
+	if err := os.Setenv("STORAGE_FILE_PATH", "../../storage/csv/data_test.csv"); err != nil {
+		t.Fatalf("failed to set STORAGE_FILE_PATH: %v", err)
+	}
 
 	cases := []struct {
 		name               string
@@ -77,25 +47,36 @@ func TestNewsletterHandler_Subscribe(t *testing.T) {
 			body:               `{"email": "abc@example.com"}`,
 		},
 	}
+
+	url := fmt.Sprintf("http://%s/api/subscribe", os.Getenv("SERVER_URL"))
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, "/api/subscribe", bytes.NewBufferString(c.body))
+			client := &http.Client{}
+			req, err := http.NewRequest("POST", url, bytes.NewBufferString(c.body)) //nolint:noctx
 			req.Header.Set("Content-Type", "application/json")
+			require.NoError(t, err)
 
-			resp, err := app.Test(req) //nolint:bodyclose
+			res, err := client.Do(req) //nolint:bodyclose
 			defer func(Body io.ReadCloser) {
 				if err = Body.Close(); err != nil {
 					t.Fatal(err)
 				}
-			}(resp.Body)
-
+			}(res.Body)
 			require.NoError(t, err)
-			require.Equal(t, c.expectedStatusCode, resp.StatusCode)
+			require.Equal(t, c.expectedStatusCode, res.StatusCode, "Unexpected status code: %d", res.StatusCode)
 		})
+	}
+	if err := clearFile(os.Getenv("STORAGE_FILE_PATH")); err != nil {
+		t.Fatalf("failed to clear file: %v", err)
 	}
 }
 
 func TestNewsletterHandler_SendEmails(t *testing.T) {
+	loadEnvironment(t)
+	if err := os.Setenv("STORAGE_FILE_PATH", "../../storage/csv/data_test.csv"); err != nil {
+		t.Fatalf("failed to set STORAGE_FILE_PATH: %v", err)
+	}
+
 	cases := []struct {
 		name               string
 		filepath           string
@@ -113,36 +94,54 @@ func TestNewsletterHandler_SendEmails(t *testing.T) {
 		},
 	}
 
+	if err := utils.WriteToCsv(os.Getenv("STORAGE_FILE_PATH"), []string{"test@test.com"}); err != nil {
+		t.Fatalf("failed to write in csv: %v", err)
+	}
+
+	url := fmt.Sprintf("http://%s/api/sendEmails", os.Getenv("SERVER_URL"))
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			setupEnvironment(t)
 			if err := os.Setenv("STORAGE_FILE_PATH", c.filepath); err != nil {
 				t.Fatal("Failed to set STORAGE_FILE_PATH")
 			}
 			loadEnvironment(t)
+			client := &http.Client{}
+			req, err := http.NewRequest("POST", url, nil) //nolint:noctx
+			require.NoError(t, err)
 
-			repos := repository.NewRepositories()
-			services := service.NewServices(repos)
-			newsletterHandler := NewNewsletterHandler(services)
-
-			app := fiber.New(config.FiberConfig())
-			api := app.Group("/api")
-			api.Post("/sendEmails", newsletterHandler.SendEmails)
-
-			req := httptest.NewRequest(http.MethodPost, "/api/sendEmails", nil)
-
-			resp, err := app.Test(req, 5000) //nolint:bodyclose
+			res, err := client.Do(req) //nolint:bodyclose
 			defer func(Body io.ReadCloser) {
 				if err = Body.Close(); err != nil {
 					t.Fatal(err)
 				}
-			}(resp.Body)
-
+			}(res.Body)
 			require.NoError(t, err)
-			require.Equal(t, c.expectedStatusCode, resp.StatusCode)
-			if _, err := os.Create(os.Getenv("STORAGE_FILE_PATH")); err != nil {
-				t.Fatal("error cleaning test file")
-			}
+			require.Equal(t, c.expectedStatusCode, res.StatusCode, "Unexpected status code: %d", res.StatusCode)
 		})
+		if err := clearFile(os.Getenv("STORAGE_FILE_PATH")); err != nil {
+			t.Fatalf("failed to clear file: %v", err)
+		}
 	}
+}
+
+func loadEnvironment(t *testing.T) {
+	if err := godotenv.Load("../../../test.env"); err != nil {
+		t.Fatal("Failed to load .env file")
+	}
+}
+
+func clearFile(filename string) error {
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0o666)
+	if err != nil {
+		return err
+	}
+	defer func(file *os.File) {
+		err = file.Close()
+		if err != nil {
+			log.Fatal("failed to close file")
+		}
+	}(file)
+
+	err = file.Truncate(0)
+	return err
 }
