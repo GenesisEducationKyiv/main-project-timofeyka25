@@ -19,8 +19,7 @@ func NewExchangeService(r *repository.Repositories) domain.ExchangeService {
 	}
 }
 
-func (c exchangeService) GetCurrencyRate() (int, error) {
-	cfg := config.Get()
+func (c exchangeService) GetCurrencyRate(cfg *config.Config) (int, error) {
 	rate, err := c.repos.Exchange.GetCurrencyRate(cfg.BaseCurrency, cfg.QuoteCurrency)
 	if err != nil {
 		return 0, errors.Wrap(err, "get rate")

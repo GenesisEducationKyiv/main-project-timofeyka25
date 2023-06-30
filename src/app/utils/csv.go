@@ -2,12 +2,16 @@ package utils
 
 import (
 	"encoding/csv"
+	"genesis-test/src/app/customerror"
 	"os"
 
 	"github.com/pkg/errors"
 )
 
 func WriteToCsv(path string, data []string) (err error) {
+	if path == "" || len(data) < 1 {
+		return customerror.ErrInvalidInput
+	}
 	file, err := os.Create(path)
 	if err != nil {
 		return errors.Wrap(err, "create file")
@@ -32,7 +36,7 @@ func WriteToCsv(path string, data []string) (err error) {
 func ReadAllFromCsvToSlice(path string) (data []string, err error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "open file")
+		return nil, customerror.ErrFileNotFound
 	}
 	defer func(f *os.File) {
 		err = f.Close()

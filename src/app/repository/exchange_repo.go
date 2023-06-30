@@ -7,6 +7,7 @@ import (
 	"genesis-test/src/app/domain"
 	"genesis-test/src/config"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -24,16 +25,21 @@ func (e exchangeRepository) GetCurrencyRate(base string, quoted string) (*domain
 	url := fmt.Sprintf(cfg.CryptoAPIFormatURL, base, quoted)
 
 	client := http.Client{}
-	req, err := http.NewRequestWithContext(context.Background(), "GET", url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create HTTP request")
 	}
 
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) //nolint:bodyclose
+	defer func(Body io.ReadCloser) {
+		if err = Body.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}(resp.Body)
+
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make HTTP request")
 	}
-	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

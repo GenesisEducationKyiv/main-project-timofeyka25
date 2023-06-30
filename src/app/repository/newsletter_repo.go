@@ -1,48 +1,40 @@
 package repository
 
 import (
+	"genesis-test/src/app/customerror"
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/utils"
-	"genesis-test/src/config"
+	mailer "genesis-test/src/pkg/mailer"
 	"log"
-	"net/smtp"
 
 	"github.com/pkg/errors"
 )
 
 type newsletterRepository struct {
-	smtpServer string
-	smtpPort   string
-	username   string
-	password   string
+	mailer      *mailer.SMTPMailer
+	storageFile string
 }
 
-func NewNewsletterRepository(
-	smtpServer,
-	smtpPort,
-	username,
-	password string,
-) domain.NewsletterRepository {
+func NewNewsletterRepository(mailer *mailer.SMTPMailer, storageFile string) domain.NewsletterRepository {
 	return &newsletterRepository{
-		smtpServer: smtpServer,
-		smtpPort:   smtpPort,
-		username:   username,
-		password:   password,
+		mailer:      mailer,
+		storageFile: storageFile,
 	}
 }
 
 func (r newsletterRepository) GetSubscribedEmails() ([]string, error) {
-	cfg := config.Get()
-
-	subscribed, err := utils.ReadAllFromCsvToSlice(cfg.StorageFile)
+	subscribed, err := utils.ReadAllFromCsvToSlice(r.storageFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "read csv file")
+	}
+	if len(subscribed) < 1 {
+		return nil, customerror.ErrNoSubscribers
 	}
 
 	return subscribed, nil
 }
 
-func (r newsletterRepository) SendToSubscribedEmails(subject, body string) ([]string, error) {
+func (r newsletterRepository) SendToSubscribedEmails(body string) ([]string, error) {
 	subscribed, err := r.GetSubscribedEmails()
 	if err != nil {
 		return nil, errors.Wrap(err, "get emails")
@@ -51,7 +43,7 @@ func (r newsletterRepository) SendToSubscribedEmails(subject, body string) ([]st
 	unsent := make([]string, 0)
 
 	for _, email := range subscribed {
-		if err = r.SendEmail(email, subject, body); err != nil {
+		if err = r.SendEmail(email, body); err != nil {
 			log.Printf("Sending error: %v\n", err)
 			unsent = append(unsent, email)
 		} else {
@@ -62,29 +54,24 @@ func (r newsletterRepository) SendToSubscribedEmails(subject, body string) ([]st
 	return unsent, nil
 }
 
-func (r newsletterRepository) SendEmail(to, subject, body string) error {
+func (r newsletterRepository) SendEmail(to, body string) error {
 	msg := "To: " + to + "\r\n" +
-		"Subject: " + subject + "\r\n" +
-		"\r\n" +
-		body
+		"Subject: Exchange Currency Newsletter" + "\r\n" +
+		"\r\n" + body
 
-	auth := smtp.PlainAuth("", r.username, r.password, r.smtpServer)
-	address := r.smtpServer + ":" + r.smtpPort
-	err := smtp.SendMail(address, auth, r.username, []string{to}, []byte(msg))
+	err := r.mailer.SendEmail(to, msg)
 	if err != nil {
-		return errors.Wrap(err, "sending failed")
+		return errors.Wrap(err, "send email")
 	}
 
 	return nil
 }
 
 func (r newsletterRepository) AddNewEmail(emails []string, emailToInsert string) error {
-	cfg := config.Get()
-
 	emails, err := utils.InsertToSortedSlice(emails, emailToInsert)
 	if err != nil {
 		return errors.Wrap(err, "insert email")
 	}
 
-	return utils.WriteToCsv(cfg.StorageFile, emails)
+	return utils.WriteToCsv(r.storageFile, emails)
 }
