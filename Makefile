@@ -2,6 +2,10 @@
 start:
 	go run src/cmd/main.go
 
+.PHONY: start_test
+start_test:
+	go run src/cmd/main.go --test=true
+
 .PHONY: gen_docs
 gen_docs:
 	swag init -g ./src/cmd/main.go -o ./docs --parseDependency --parseInternal --quiet

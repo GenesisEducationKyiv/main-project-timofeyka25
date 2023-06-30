@@ -9,7 +9,11 @@ import (
 	"genesis-test/src/app/repository/newsletter"
 	"genesis-test/src/app/repository/storage"
 	"genesis-test/src/app/service"
+	exchangeService "genesis-test/src/app/service/exchange"
+	newsletterService "genesis-test/src/app/service/newsletter"
+	"genesis-test/src/app/service/subscription"
 	"genesis-test/src/config"
+	"genesis-test/src/logger"
 	"genesis-test/src/pkg/mailer"
 
 	"github.com/gofiber/fiber/v2"
@@ -25,13 +29,34 @@ func createRepositories() *service.Repositories {
 		cfg.SMTPPassword)
 	csvStorage := storage.NewCsvStorage(cfg.StorageFile)
 	newsletterRepo := newsletter.NewNewsletterRepository(smtpMailer)
-	exchangeRepo := exchange.NewExchangeCoinbaseRepository(cfg.CryptoAPIFormatURL)
+	exchangerProvider := getExchangeChains()
 
 	return &service.Repositories{
 		Newsletter: newsletterRepo,
 		Storage:    csvStorage,
-		Exchange:   exchangeRepo,
+		Exchange:   exchangerProvider,
 	}
+}
+
+func getExchangeChains() service.ExchangeChain {
+	newLogger := logger.NewZapLogger(config.Get().LogPath)
+	exchangeLogger := exchange.NewExchangeLogger(newLogger)
+
+	coinbaseChain := exchange.CoinbaseFactory{}.CreateCoinbaseFactory()
+	binanceChain := exchange.BinanceFactory{}.CreateBinanceFactory()
+	btcTradeChain := exchange.BTCTradeUAFactory{}.CreateBTCTradeUAFactory()
+	coingeckoChain := exchange.CoingeckoFactory{}.CreateCoingeckoFactory()
+
+	coinbaseLoggingChain := exchange.NewLoggingWrapper(coinbaseChain, exchangeLogger)
+	binanceLoggingChain := exchange.NewLoggingWrapper(binanceChain, exchangeLogger)
+	btcTradeLoggingChain := exchange.NewLoggingWrapper(btcTradeChain, exchangeLogger)
+	coingeckoLoggingChain := exchange.NewLoggingWrapper(coingeckoChain, exchangeLogger)
+
+	coinbaseLoggingChain.SetNext(binanceLoggingChain)
+	binanceLoggingChain.SetNext(btcTradeLoggingChain)
+	btcTradeLoggingChain.SetNext(coingeckoLoggingChain)
+
+	return coinbaseLoggingChain
 }
 
 func createServices(repos *service.Repositories) *handler.Services {
@@ -40,14 +65,14 @@ func createServices(repos *service.Repositories) *handler.Services {
 		BaseCurrency:  cfg.BaseCurrency,
 		QuoteCurrency: cfg.QuoteCurrency,
 	}
-	exchangeService := service.NewExchangeService(BTCUAHPair, repos.Exchange)
-	newsletterService := service.NewNewsletterService(repos, BTCUAHPair)
-	subscriptionService := service.NewSubscriptionService(repos.Storage)
+	newExchangeService := exchangeService.NewExchangeService(BTCUAHPair, repos.Exchange)
+	newNewsletterService := newsletterService.NewNewsletterService(repos, BTCUAHPair)
+	subscriptionService := subscription.NewSubscriptionService(repos.Storage)
 
 	return &handler.Services{
 		Subscription: subscriptionService,
-		Newsletter:   newsletterService,
-		Exchange:     exchangeService,
+		Newsletter:   newNewsletterService,
+		Exchange:     newExchangeService,
 	}
 }
 

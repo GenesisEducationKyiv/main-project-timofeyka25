@@ -1,16 +1,17 @@
-package service
+package subscription
 
 import (
 	"genesis-test/src/app/customerror"
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/handler"
+	"genesis-test/src/app/service"
 )
 
 type subscriptionService struct {
-	storage EmailStorage
+	storage service.EmailStorage
 }
 
-func NewSubscriptionService(storage EmailStorage) handler.SubscriptionService {
+func NewSubscriptionService(storage service.EmailStorage) handler.SubscriptionService {
 	return &subscriptionService{
 		storage: storage,
 	}

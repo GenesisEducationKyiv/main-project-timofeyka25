@@ -1,86 +1,82 @@
 package exchange
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/service"
+	"genesis-test/src/app/utils"
 	"genesis-test/src/config"
-	"io"
-	"log"
-	"net/http"
 	"strconv"
-
-	"github.com/pkg/errors"
 )
 
-type coinbaseCurrencyRate struct {
-	Amount        string `json:"amount"`
-	BaseCurrency  string `json:"base"`
-	QuoteCurrency string `json:"currency"`
-}
+type CoinbaseFactory struct{}
 
-type coinbaseExchangerResponse struct {
-	coinbaseCurrencyRate `json:"data"`
-}
-
-type exchangeCoinbaseRepository struct {
-	CoinbaseEndpoint string
-}
-
-func NewExchangeCoinbaseRepository(coinbaseEndpoint string) service.ExchangeRepository {
-	return &exchangeCoinbaseRepository{
-		CoinbaseEndpoint: coinbaseEndpoint,
+func (f CoinbaseFactory) CreateCoinbaseFactory() service.ExchangeChain {
+	return &coinbaseProvider{
+		coinbaseURL: config.Get().CoinbaseURL,
 	}
 }
 
-func (e exchangeCoinbaseRepository) GetCurrencyRate(pair *domain.CurrencyPair) (*domain.CurrencyRate, error) {
-	cfg := config.Get()
-	url := fmt.Sprintf(cfg.CryptoAPIFormatURL, pair.BaseCurrency, pair.QuoteCurrency)
+type coinbaseProvider struct {
+	coinbaseURL string
+	next        service.ExchangeChain
+}
 
-	client := http.Client{}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+type coinbaseResponse struct {
+	Data struct {
+		Amount        string `json:"amount"`
+		BaseCurrency  string `json:"base"`
+		QuoteCurrency string `json:"currency"`
+	} `json:"data"`
+}
+
+func (c *coinbaseProvider) GetCurrencyRate(pair *domain.CurrencyPair) (*domain.CurrencyRate, error) {
+	rate, err := c.getCurrencyRate(pair)
+	if err != nil && c.next != nil {
+		return c.next.GetCurrencyRate(pair)
+	}
+
+	return rate, nil
+}
+
+func (c *coinbaseProvider) SetNext(chain service.ExchangeChain) {
+	c.next = chain
+}
+
+func (c *coinbaseProvider) getCurrencyRate(pair *domain.CurrencyPair) (*domain.CurrencyRate, error) {
+	resp, err := c.doRequest(pair)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create HTTP request")
+		return nil, err
 	}
-
-	resp, err := client.Do(req) //nolint:bodyclose
-	defer func(Body io.ReadCloser) {
-		if err = Body.Close(); err != nil {
-			log.Fatal(err)
-		}
-	}(resp.Body)
-
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to make HTTP request")
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read response body")
-	}
-
-	rate := new(coinbaseExchangerResponse)
-
-	if err = json.Unmarshal(body, &rate); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal JSON")
-	}
-
-	return rate.toDefaultRate()
+	return resp.toDefaultRate()
 }
 
-func (c *coinbaseCurrencyRate) toDefaultRate() (*domain.CurrencyRate, error) {
+func (c *coinbaseProvider) doRequest(pair *domain.CurrencyPair) (*coinbaseResponse, error) {
+	url := fmt.Sprintf(
+		c.coinbaseURL,
+		pair.GetBaseCurrency(),
+		pair.GetQuoteCurrency(),
+	)
+	rate := new(coinbaseResponse)
+	err := utils.GetAndParse(url, &rate)
+	if err != nil {
+		return nil, err
+	}
+
+	return rate, nil
+}
+
+func (c *coinbaseResponse) toDefaultRate() (*domain.CurrencyRate, error) {
 	bitSize := 64
-	floatPrice, err := strconv.ParseFloat(c.Amount, bitSize)
+	floatPrice, err := strconv.ParseFloat(c.Data.Amount, bitSize)
 	if err != nil {
 		return nil, err
 	}
 	return &domain.CurrencyRate{
 		Price: floatPrice,
 		CurrencyPair: domain.CurrencyPair{
-			BaseCurrency:  c.BaseCurrency,
-			QuoteCurrency: c.QuoteCurrency,
+			BaseCurrency:  c.Data.BaseCurrency,
+			QuoteCurrency: c.Data.QuoteCurrency,
 		},
 	}, nil
 }

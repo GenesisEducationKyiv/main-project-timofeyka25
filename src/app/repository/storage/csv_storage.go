@@ -1,8 +1,11 @@
 package storage
 
 import (
+	"genesis-test/src/app/customerror"
 	"genesis-test/src/app/service"
 	"genesis-test/src/app/utils"
+
+	"github.com/pkg/errors"
 )
 
 type csvStorage struct {
@@ -15,6 +18,9 @@ func NewCsvStorage(filepath string) service.EmailStorage {
 
 func (c *csvStorage) GetAllEmails() ([]string, error) {
 	subscribed, err := utils.ReadAllFromCsvToSlice(c.filepath)
+	if len(subscribed) < 1 {
+		return nil, customerror.ErrNoSubscribers
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +30,7 @@ func (c *csvStorage) GetAllEmails() ([]string, error) {
 
 func (c *csvStorage) AddEmail(newEmail string) error {
 	emails, err := c.GetAllEmails()
-	if err != nil {
+	if err != nil && !errors.Is(err, customerror.ErrNoSubscribers) {
 		return err
 	}
 	sorted, err := utils.InsertToSortedSlice(emails, newEmail)

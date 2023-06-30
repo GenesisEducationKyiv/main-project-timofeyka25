@@ -1,20 +1,21 @@
-package service
+package newsletter
 
 import (
 	"fmt"
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/handler"
+	"genesis-test/src/app/service"
 
 	"github.com/pkg/errors"
 )
 
 type newsletterService struct {
-	repos *Repositories
+	repos *service.Repositories
 	pair  *domain.CurrencyPair
 }
 
 func NewNewsletterService(
-	repos *Repositories,
+	repos *service.Repositories,
 	pair *domain.CurrencyPair,
 ) handler.NewsletterService {
 	return &newsletterService{
