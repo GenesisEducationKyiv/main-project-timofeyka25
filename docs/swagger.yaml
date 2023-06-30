@@ -1,0 +1,85 @@
+basePath: /api
+definitions:
+  fiber.Map:
+    additionalProperties: true
+    type: object
+  genesis-test_src_app_domain.Subscriber:
+    properties:
+      email:
+        type: string
+    required:
+      - email
+    type: object
+  src_app_handler.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: { }
+  title: Genesis Mailer
+  version: "1.0"
+paths:
+  /rate:
+    get:
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/src_app_handler.ErrorResponse'
+      summary: Get currency rate
+      tags:
+        - Exchange
+  /sendEmails:
+    post:
+      consumes:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/src_app_handler.ErrorResponse'
+      summary: Send currency rate to subscribed emails
+      tags:
+        - Newsletter
+  /subscribe:
+    post:
+      consumes:
+        - application/json
+      parameters:
+        - description: Email to subscribe
+          in: body
+          name: input
+          required: true
+          schema:
+            $ref: '#/definitions/genesis-test_src_app_domain.Subscriber'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/src_app_handler.ErrorResponse'
+        "409":
+          description: Conflict
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/src_app_handler.ErrorResponse'
+      summary: Subscribe to newsletter
+      tags:
+        - Newsletter
+swagger: "2.0"
