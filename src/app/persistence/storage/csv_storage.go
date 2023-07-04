@@ -8,15 +8,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-type csvStorage struct {
+type csvRepository struct {
 	filepath string
 }
 
-func NewCsvStorage(filepath string) service.EmailStorage {
-	return &csvStorage{filepath: filepath}
+func NewCsvRepository(filepath string) service.EmailStorage {
+	return &csvRepository{filepath: filepath}
 }
 
-func (c *csvStorage) GetAllEmails() ([]string, error) {
+func (c *csvRepository) GetAllEmails() ([]string, error) {
 	subscribed, err := utils.ReadAllFromCsvToSlice(c.filepath)
 	if len(subscribed) < 1 {
 		return nil, customerror.ErrNoSubscribers
@@ -28,7 +28,7 @@ func (c *csvStorage) GetAllEmails() ([]string, error) {
 	return subscribed, nil
 }
 
-func (c *csvStorage) AddEmail(newEmail string) error {
+func (c *csvRepository) AddEmail(newEmail string) error {
 	emails, err := c.GetAllEmails()
 	if err != nil && !errors.Is(err, customerror.ErrNoSubscribers) {
 		return err

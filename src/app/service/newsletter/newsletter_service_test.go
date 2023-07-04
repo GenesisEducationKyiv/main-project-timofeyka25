@@ -3,7 +3,6 @@ package newsletter
 import (
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/domain/mocks"
-	"genesis-test/src/app/service"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -13,7 +12,7 @@ import (
 
 func TestNewsletterService_SendEmails(t *testing.T) {
 	type mockBehavior func(mockExchangeChain *mocks.MockExchangeChain,
-		mockNewsletterRepo *mocks.MockNewsletterRepository,
+		mockNewsletterSender *mocks.MockNewsletterSender,
 		mockEmailStorage *mocks.MockEmailStorage,
 		mockExchangeResp *domain.CurrencyRate,
 		mockNewsletterResp []string,
@@ -38,7 +37,7 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 			mockNewsletterResponse: []string{"abc@test.com"},
 			mockBehavior: func(
 				mockExchangeChain *mocks.MockExchangeChain,
-				mockNewsletterRepo *mocks.MockNewsletterRepository,
+				mockNewsletterSender *mocks.MockNewsletterSender,
 				mockEmailStorage *mocks.MockEmailStorage,
 				mockExchangeResp *domain.CurrencyRate,
 				mockNewsletterResp []string,
@@ -48,7 +47,7 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 					QuoteCurrency: "UAH",
 				}).Return(mockExchangeResp, nil)
 				mockEmailStorage.EXPECT().GetAllEmails().Return([]string{"abc@test.com"}, nil)
-				mockNewsletterRepo.EXPECT().MultipleSending([]string{"abc@test.com"}, &domain.EmailMessage{
+				mockNewsletterSender.EXPECT().MultipleSending([]string{"abc@test.com"}, &domain.EmailMessage{
 					Subject: "Crypto Exchange Newsletter",
 					Body:    "The current exchange rate of BTC to UAH is 123.000000 UAH",
 				}).Return(mockNewsletterResp, nil)
@@ -59,7 +58,7 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 			name: "any error case",
 			mockBehavior: func(
 				mockExchangeChain *mocks.MockExchangeChain,
-				mockNewsletterRepo *mocks.MockNewsletterRepository,
+				mockNewsletterSender *mocks.MockNewsletterSender,
 				mockEmailStorage *mocks.MockEmailStorage,
 				mockExchangeResp *domain.CurrencyRate,
 				mockNewsletterResp []string,
@@ -79,24 +78,23 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockNewsletterRepo := mocks.NewMockNewsletterRepository(ctrl)
+			mockNewsletterSender := mocks.NewMockNewsletterSender(ctrl)
 			mockExchangeChain := mocks.NewMockExchangeChain(ctrl)
-			mockEmailStorage := mocks.NewMockEmailStorage(ctrl)
+			mockEmailRepository := mocks.NewMockEmailStorage(ctrl)
 
-			repos := &service.Repositories{
-				Newsletter: mockNewsletterRepo,
-				Storage:    mockEmailStorage,
-				Exchange:   mockExchangeChain,
-			}
-			newsletterTestService := NewNewsletterService(repos, &domain.CurrencyPair{
-				BaseCurrency:  "BTC",
-				QuoteCurrency: "UAH",
-			})
+			newsletterTestService := NewNewsletterService(
+				mockExchangeChain,
+				mockEmailRepository,
+				mockNewsletterSender,
+				&domain.CurrencyPair{
+					BaseCurrency:  "BTC",
+					QuoteCurrency: "UAH",
+				})
 
 			c.mockBehavior(
 				mockExchangeChain,
-				mockNewsletterRepo,
-				mockEmailStorage,
+				mockNewsletterSender,
+				mockEmailRepository,
 				c.mockExchangeResponse,
 				c.mockNewsletterResponse,
 			)
