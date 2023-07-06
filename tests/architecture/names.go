@@ -4,7 +4,7 @@ const (
 	configPackage     = "genesis-test/src/config"
 	loggerPackage     = "genesis-test/src/logger"
 	utilsPackage      = "genesis-test/src/app/utils"
-	packagesLayer     = "genesis-test/src/pkg/..."
+	packages          = "genesis-test/src/pkg/..."
 	domainLayer       = "genesis-test/src/app/domain/..."
 	presentationLayer = "genesis-test/src/app/presentation/..."
 	applicationLayer  = "genesis-test/src/app/application/..."

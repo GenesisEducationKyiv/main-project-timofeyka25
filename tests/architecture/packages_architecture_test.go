@@ -6,8 +6,8 @@ import (
 	"github.com/matthewmcnew/archtest"
 )
 
-func TestPackagesLayerArchitecture(t *testing.T) {
-	archtest.Package(t, packagesLayer).ShouldNotDependOn(
+func TestPackagesHaveNoDependencies(t *testing.T) {
+	archtest.Package(t, packages).ShouldNotDependOn(
 		configPackage,
 		loggerPackage,
 		utilsPackage,

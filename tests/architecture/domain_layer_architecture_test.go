@@ -11,7 +11,7 @@ func TestDomainLayerArchitecture(t *testing.T) {
 		configPackage,
 		loggerPackage,
 		utilsPackage,
-		packagesLayer,
+		packages,
 		applicationLayer,
 		persistenceLayer,
 		presentationLayer,

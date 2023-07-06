@@ -11,7 +11,7 @@ func TestUtilsHaveNoDependencies(t *testing.T) {
 		configPackage,
 		loggerPackage,
 		domainLayer,
-		packagesLayer,
+		packages,
 		applicationLayer,
 		persistenceLayer,
 		presentationLayer,

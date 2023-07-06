@@ -8,7 +8,7 @@ import (
 
 func TestPresentationLayerArchitecture(t *testing.T) {
 	archtest.Package(t, presentationLayer).ShouldNotDependDirectlyOn(
-		packagesLayer,
+		packages,
 		applicationLayer,
 		persistenceLayer,
 	)
