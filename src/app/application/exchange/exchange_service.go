@@ -4,6 +4,7 @@ import (
 	"genesis-test/src/app/application"
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/domain/model"
+
 	"github.com/pkg/errors"
 )
 

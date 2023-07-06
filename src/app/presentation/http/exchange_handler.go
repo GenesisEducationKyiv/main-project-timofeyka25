@@ -3,6 +3,7 @@ package http
 import (
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/presentation/http/responses"
+
 	"github.com/gofiber/fiber/v2"
 )
 

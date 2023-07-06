@@ -5,6 +5,7 @@ import (
 	"genesis-test/src/app/api"
 	"genesis-test/src/app/presentation/http"
 	"genesis-test/src/app/presentation/http/middleware"
+
 	"github.com/gofiber/fiber/v2"
 	swagger "github.com/swaggo/fiber-swagger"
 )
