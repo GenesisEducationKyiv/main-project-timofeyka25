@@ -15,9 +15,3 @@ type NewsletterService interface {
 type SubscriptionService interface {
 	Subscribe(subscriber *domain.Subscriber) error
 }
-
-type Services struct {
-	Subscription SubscriptionService
-	Newsletter   NewsletterService
-	Exchange     ExchangeService
-}

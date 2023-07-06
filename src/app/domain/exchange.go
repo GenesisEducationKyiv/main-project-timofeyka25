@@ -11,3 +11,11 @@ type CurrencyRate struct {
 	CurrencyPair
 	Price float64
 }
+
+func (c CurrencyPair) GetBaseCurrency() string {
+	return c.BaseCurrency
+}
+
+func (c CurrencyPair) GetQuoteCurrency() string {
+	return c.QuoteCurrency
+}

@@ -1,4 +1,4 @@
-package handler
+package e2e
 
 import (
 	"fmt"

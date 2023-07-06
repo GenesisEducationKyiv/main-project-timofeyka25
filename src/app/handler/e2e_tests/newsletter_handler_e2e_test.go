@@ -1,4 +1,4 @@
-package handler
+package e2e
 
 import (
 	"bytes"
@@ -17,8 +17,11 @@ import (
 
 func TestNewsletterHandler_Subscribe(t *testing.T) {
 	loadEnvironment(t)
-	if err := os.Setenv("STORAGE_FILE_PATH", "../../storage/csv/data_test.csv"); err != nil {
+	if err := os.Setenv("STORAGE_FILE_PATH", "../../../storage/csv/data_test.csv"); err != nil {
 		t.Fatalf("failed to set STORAGE_FILE_PATH: %v", err)
+	}
+	if err := clearFile(os.Getenv("STORAGE_FILE_PATH")); err != nil {
+		t.Fatalf("failed to clear file: %v", err)
 	}
 
 	cases := []struct {
@@ -73,23 +76,20 @@ func TestNewsletterHandler_Subscribe(t *testing.T) {
 
 func TestNewsletterHandler_SendEmails(t *testing.T) {
 	loadEnvironment(t)
-	if err := os.Setenv("STORAGE_FILE_PATH", "../../storage/csv/data_test.csv"); err != nil {
+	if err := os.Setenv("STORAGE_FILE_PATH", "../../../storage/csv/data_test.csv"); err != nil {
 		t.Fatalf("failed to set STORAGE_FILE_PATH: %v", err)
 	}
 
 	cases := []struct {
 		name               string
-		filepath           string
 		expectedStatusCode int
 	}{
 		{
 			name:               "Send emails successful",
-			filepath:           "../../storage/csv/data_test.csv",
 			expectedStatusCode: http.StatusOK,
 		},
 		{
 			name:               "Send emails error (no subscribers)",
-			filepath:           "../../storage/csv/data_test_empty.csv",
 			expectedStatusCode: http.StatusBadRequest,
 		},
 	}
@@ -101,9 +101,6 @@ func TestNewsletterHandler_SendEmails(t *testing.T) {
 	url := fmt.Sprintf("http://%s/api/sendEmails", os.Getenv("SERVER_URL"))
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if err := os.Setenv("STORAGE_FILE_PATH", c.filepath); err != nil {
-				t.Fatal("Failed to set STORAGE_FILE_PATH")
-			}
 			loadEnvironment(t)
 			client := &http.Client{}
 			req, err := http.NewRequest("POST", url, nil) //nolint:noctx
@@ -124,12 +121,6 @@ func TestNewsletterHandler_SendEmails(t *testing.T) {
 	}
 }
 
-func loadEnvironment(t *testing.T) {
-	if err := godotenv.Load("../../../test.env"); err != nil {
-		t.Fatal("Failed to load .env file")
-	}
-}
-
 func clearFile(filename string) error {
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0o666)
 	if err != nil {
@@ -144,4 +135,10 @@ func clearFile(filename string) error {
 
 	err = file.Truncate(0)
 	return err
+}
+
+func loadEnvironment(t *testing.T) {
+	if err := godotenv.Load("../../../../test.env"); err != nil {
+		t.Fatal("Failed to load .env file")
+	}
 }

@@ -1,30 +1,37 @@
-package service
+package newsletter
 
 import (
 	"fmt"
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/handler"
+	"genesis-test/src/app/service"
 
 	"github.com/pkg/errors"
 )
 
 type newsletterService struct {
-	repos *Repositories
-	pair  *domain.CurrencyPair
+	exchangeChain service.ExchangeChain
+	storage       service.EmailStorage
+	sender        service.NewsletterSender
+	pair          *domain.CurrencyPair
 }
 
 func NewNewsletterService(
-	repos *Repositories,
+	exchangeChain service.ExchangeChain,
+	storage service.EmailStorage,
+	sender service.NewsletterSender,
 	pair *domain.CurrencyPair,
 ) handler.NewsletterService {
 	return &newsletterService{
-		repos: repos,
-		pair:  pair,
+		exchangeChain: exchangeChain,
+		storage:       storage,
+		sender:        sender,
+		pair:          pair,
 	}
 }
 
 func (s *newsletterService) SendCurrencyRate() ([]string, error) {
-	rate, err := s.repos.Exchange.GetCurrencyRate(s.pair)
+	rate, err := s.exchangeChain.GetCurrencyRate(s.pair)
 	if err != nil {
 		return nil, errors.Wrap(err, "get rate")
 	}
@@ -33,11 +40,11 @@ func (s *newsletterService) SendCurrencyRate() ([]string, error) {
 }
 
 func (s *newsletterService) sendToSubscribed(message *domain.EmailMessage) ([]string, error) {
-	subscribers, err := s.repos.Storage.GetAllEmails()
+	subscribers, err := s.storage.GetAllEmails()
 	if err != nil {
 		return nil, errors.Wrap(err, "send to subscribed")
 	}
-	return s.repos.Newsletter.MultipleSending(subscribers, message)
+	return s.sender.MultipleSending(subscribers, message)
 }
 
 func (s *newsletterService) buildMessage(rate *domain.CurrencyRate) *domain.EmailMessage {

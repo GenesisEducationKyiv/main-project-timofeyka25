@@ -1,4 +1,4 @@
-package service
+package exchange
 
 import (
 	"genesis-test/src/app/domain"
@@ -13,21 +13,21 @@ func TestExchangeService_GetCurrencyRate(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockExchangeRepo := mocks.NewMockExchangeRepository(ctrl)
+	mockChain := mocks.NewMockExchangeChain(ctrl)
 
 	BTCUAHPair := &domain.CurrencyPair{
 		BaseCurrency:  "BTC",
 		QuoteCurrency: "UAH",
 	}
 
-	excService := NewExchangeService(BTCUAHPair, mockExchangeRepo)
+	excService := NewExchangeService(BTCUAHPair, mockChain)
 
 	mockResponse := &domain.CurrencyRate{
 		Price:        123456,
 		CurrencyPair: *BTCUAHPair,
 	}
 
-	mockExchangeRepo.EXPECT().GetCurrencyRate(BTCUAHPair).Return(mockResponse, nil)
+	mockChain.EXPECT().GetCurrencyRate(BTCUAHPair).Return(mockResponse, nil)
 	rate, err := excService.GetCurrencyRate()
 	require.NoError(t, err)
 

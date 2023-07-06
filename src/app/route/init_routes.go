@@ -5,58 +5,101 @@ import (
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/handler"
 	"genesis-test/src/app/handler/middleware"
-	"genesis-test/src/app/repository/exchange"
-	"genesis-test/src/app/repository/newsletter"
-	"genesis-test/src/app/repository/storage"
+	"genesis-test/src/app/persistence/exchange"
+	"genesis-test/src/app/persistence/newsletter"
+	"genesis-test/src/app/persistence/storage"
 	"genesis-test/src/app/service"
+	exchangeService "genesis-test/src/app/service/exchange"
+	newsletterService "genesis-test/src/app/service/newsletter"
+	"genesis-test/src/app/service/subscription"
 	"genesis-test/src/config"
+	"genesis-test/src/logger"
 	"genesis-test/src/pkg/mailer"
 
 	"github.com/gofiber/fiber/v2"
 	swagger "github.com/swaggo/fiber-swagger"
 )
 
-func createRepositories() *service.Repositories {
+type persistence struct {
+	sender  service.NewsletterSender
+	storage service.EmailStorage
+	chain   service.ExchangeChain
+}
+
+type services struct {
+	exchange     handler.ExchangeService
+	newsletter   handler.NewsletterService
+	subscription handler.SubscriptionService
+}
+
+func createPersistence() *persistence {
 	cfg := config.Get()
 	smtpMailer := mailer.NewSMTPMailer(
 		cfg.SMTPServer,
 		cfg.SMTPPort,
 		cfg.SMTPUsername,
 		cfg.SMTPPassword)
-	csvStorage := storage.NewCsvStorage(cfg.StorageFile)
-	newsletterRepo := newsletter.NewNewsletterRepository(smtpMailer)
-	exchangeRepo := exchange.NewExchangeCoinbaseRepository(cfg.CryptoAPIFormatURL)
+	csvStorage := storage.NewCsvRepository(cfg.StorageFile)
+	newsletterSender := newsletter.NewNewsletterSender(smtpMailer)
+	exchangerChain := getExchangeChains()
 
-	return &service.Repositories{
-		Newsletter: newsletterRepo,
-		Storage:    csvStorage,
-		Exchange:   exchangeRepo,
+	return &persistence{
+		sender:  newsletterSender,
+		storage: csvStorage,
+		chain:   exchangerChain,
 	}
 }
 
-func createServices(repos *service.Repositories) *handler.Services {
+func getExchangeChains() service.ExchangeChain {
+	newLogger := logger.NewZapLogger(config.Get().LogPath)
+	exchangeLogger := exchange.NewExchangeLogger(newLogger)
+
+	coinbaseChain := exchange.CoinbaseFactory{}.CreateCoinbaseFactory()
+	binanceChain := exchange.BinanceFactory{}.CreateBinanceFactory()
+	btcTradeChain := exchange.BTCTradeUAFactory{}.CreateBTCTradeUAFactory()
+	coingeckoChain := exchange.CoingeckoFactory{}.CreateCoingeckoFactory()
+
+	coinbaseLoggingChain := exchange.NewLoggingWrapper(coinbaseChain, exchangeLogger)
+	binanceLoggingChain := exchange.NewLoggingWrapper(binanceChain, exchangeLogger)
+	btcTradeLoggingChain := exchange.NewLoggingWrapper(btcTradeChain, exchangeLogger)
+	coingeckoLoggingChain := exchange.NewLoggingWrapper(coingeckoChain, exchangeLogger)
+
+	coinbaseLoggingChain.SetNext(binanceLoggingChain)
+	binanceLoggingChain.SetNext(btcTradeLoggingChain)
+	btcTradeLoggingChain.SetNext(coingeckoLoggingChain)
+
+	return coinbaseLoggingChain
+}
+
+func createServices(persistence *persistence) *services {
 	cfg := config.Get()
 	BTCUAHPair := &domain.CurrencyPair{
 		BaseCurrency:  cfg.BaseCurrency,
 		QuoteCurrency: cfg.QuoteCurrency,
 	}
-	exchangeService := service.NewExchangeService(BTCUAHPair, repos.Exchange)
-	newsletterService := service.NewNewsletterService(repos, BTCUAHPair)
-	subscriptionService := service.NewSubscriptionService(repos.Storage)
+	newExchangeService := exchangeService.NewExchangeService(
+		BTCUAHPair,
+		persistence.chain)
+	newNewsletterService := newsletterService.NewNewsletterService(
+		persistence.chain,
+		persistence.storage,
+		persistence.sender,
+		BTCUAHPair)
+	subscriptionService := subscription.NewSubscriptionService(persistence.storage)
 
-	return &handler.Services{
-		Subscription: subscriptionService,
-		Newsletter:   newsletterService,
-		Exchange:     exchangeService,
+	return &services{
+		exchange:     newExchangeService,
+		newsletter:   newNewsletterService,
+		subscription: subscriptionService,
 	}
 }
 
 func InitRoutes(app *fiber.App) {
-	repos := createRepositories()
-	services := createServices(repos)
-	newsletterHandler := handler.NewNewsletterHandler(services.Newsletter)
-	exchangeHandler := handler.NewExchangeHandler(services.Exchange)
-	subscriptionHandler := handler.NewSubscriptionHandler(services.Subscription)
+	newPersistence := createPersistence()
+	newServices := createServices(newPersistence)
+	newsletterHandler := handler.NewNewsletterHandler(newServices.newsletter)
+	exchangeHandler := handler.NewExchangeHandler(newServices.exchange)
+	subscriptionHandler := handler.NewSubscriptionHandler(newServices.subscription)
 
 	middleware.FiberMiddleware(app)
 

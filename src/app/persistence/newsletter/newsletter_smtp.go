@@ -10,17 +10,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-type newsletterSMTPRepository struct {
+type newsletterSMTPSender struct {
 	mailer *mailer.SMTPMailer
 }
 
-func NewNewsletterRepository(mailer *mailer.SMTPMailer) service.NewsletterRepository {
-	return &newsletterSMTPRepository{
+func NewNewsletterSender(mailer *mailer.SMTPMailer) service.NewsletterSender {
+	return &newsletterSMTPSender{
 		mailer: mailer,
 	}
 }
 
-func (r *newsletterSMTPRepository) MultipleSending(subscribers []string, msg *domain.EmailMessage) ([]string, error) {
+func (r *newsletterSMTPSender) MultipleSending(subscribers []string, msg *domain.EmailMessage) ([]string, error) {
 	var unsent []string
 
 	body := fmt.Sprintf("Subject: %s\r\n%s", msg.Subject, msg.Body)
@@ -36,7 +36,7 @@ func (r *newsletterSMTPRepository) MultipleSending(subscribers []string, msg *do
 	return unsent, nil
 }
 
-func (r *newsletterSMTPRepository) sendEmail(to, body string) error {
+func (r *newsletterSMTPSender) sendEmail(to, body string) error {
 	err := r.mailer.SendEmail(to, body)
 	if err != nil {
 		return errors.Wrap(err, "send email")

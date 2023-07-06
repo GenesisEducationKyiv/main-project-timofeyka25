@@ -37,5 +37,6 @@ func loadEnv() error {
 	default:
 		envFile = ".env"
 	}
+
 	return godotenv.Load(envFile)
 }

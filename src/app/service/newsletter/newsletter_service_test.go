@@ -1,4 +1,4 @@
-package service
+package newsletter
 
 import (
 	"genesis-test/src/app/domain"
@@ -11,8 +11,8 @@ import (
 )
 
 func TestNewsletterService_SendEmails(t *testing.T) {
-	type mockBehavior func(mockExchangeRepo *mocks.MockExchangeRepository,
-		mockNewsletterRepo *mocks.MockNewsletterRepository,
+	type mockBehavior func(mockExchangeChain *mocks.MockExchangeChain,
+		mockNewsletterSender *mocks.MockNewsletterSender,
 		mockEmailStorage *mocks.MockEmailStorage,
 		mockExchangeResp *domain.CurrencyRate,
 		mockNewsletterResp []string,
@@ -36,18 +36,18 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 			},
 			mockNewsletterResponse: []string{"abc@test.com"},
 			mockBehavior: func(
-				mockExchangeRepo *mocks.MockExchangeRepository,
-				mockNewsletterRepo *mocks.MockNewsletterRepository,
+				mockExchangeChain *mocks.MockExchangeChain,
+				mockNewsletterSender *mocks.MockNewsletterSender,
 				mockEmailStorage *mocks.MockEmailStorage,
 				mockExchangeResp *domain.CurrencyRate,
 				mockNewsletterResp []string,
 			) {
-				mockExchangeRepo.EXPECT().GetCurrencyRate(&domain.CurrencyPair{
+				mockExchangeChain.EXPECT().GetCurrencyRate(&domain.CurrencyPair{
 					BaseCurrency:  "BTC",
 					QuoteCurrency: "UAH",
 				}).Return(mockExchangeResp, nil)
 				mockEmailStorage.EXPECT().GetAllEmails().Return([]string{"abc@test.com"}, nil)
-				mockNewsletterRepo.EXPECT().MultipleSending([]string{"abc@test.com"}, &domain.EmailMessage{
+				mockNewsletterSender.EXPECT().MultipleSending([]string{"abc@test.com"}, &domain.EmailMessage{
 					Subject: "Crypto Exchange Newsletter",
 					Body:    "The current exchange rate of BTC to UAH is 123.000000 UAH",
 				}).Return(mockNewsletterResp, nil)
@@ -57,13 +57,13 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 		{
 			name: "any error case",
 			mockBehavior: func(
-				mockExchangeRepo *mocks.MockExchangeRepository,
-				mockNewsletterRepo *mocks.MockNewsletterRepository,
+				mockExchangeChain *mocks.MockExchangeChain,
+				mockNewsletterSender *mocks.MockNewsletterSender,
 				mockEmailStorage *mocks.MockEmailStorage,
 				mockExchangeResp *domain.CurrencyRate,
 				mockNewsletterResp []string,
 			) {
-				mockExchangeRepo.EXPECT().GetCurrencyRate(&domain.CurrencyPair{
+				mockExchangeChain.EXPECT().GetCurrencyRate(&domain.CurrencyPair{
 					BaseCurrency:  "BTC",
 					QuoteCurrency: "UAH",
 				}).Return(nil,
@@ -78,24 +78,23 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockNewsletterRepo := mocks.NewMockNewsletterRepository(ctrl)
-			mockExchangeRepo := mocks.NewMockExchangeRepository(ctrl)
-			mockEmailStorage := mocks.NewMockEmailStorage(ctrl)
+			mockNewsletterSender := mocks.NewMockNewsletterSender(ctrl)
+			mockExchangeChain := mocks.NewMockExchangeChain(ctrl)
+			mockEmailRepository := mocks.NewMockEmailStorage(ctrl)
 
-			repos := &Repositories{
-				Newsletter: mockNewsletterRepo,
-				Storage:    mockEmailStorage,
-				Exchange:   mockExchangeRepo,
-			}
-			newsletterTestService := NewNewsletterService(repos, &domain.CurrencyPair{
-				BaseCurrency:  "BTC",
-				QuoteCurrency: "UAH",
-			})
+			newsletterTestService := NewNewsletterService(
+				mockExchangeChain,
+				mockEmailRepository,
+				mockNewsletterSender,
+				&domain.CurrencyPair{
+					BaseCurrency:  "BTC",
+					QuoteCurrency: "UAH",
+				})
 
 			c.mockBehavior(
-				mockExchangeRepo,
-				mockNewsletterRepo,
-				mockEmailStorage,
+				mockExchangeChain,
+				mockNewsletterSender,
+				mockEmailRepository,
 				c.mockExchangeResponse,
 				c.mockNewsletterResponse,
 			)
