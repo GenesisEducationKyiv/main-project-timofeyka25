@@ -1,19 +1,18 @@
 package handler
 
 import (
-	"genesis-test/src/app/service"
-	"genesis-test/src/config"
+	"genesis-test/src/app/handler/responses"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type ExchangeHandler struct {
-	services *service.Services
+	service ExchangeService
 }
 
-func NewExchangeHandler(s *service.Services) *ExchangeHandler {
+func NewExchangeHandler(s ExchangeService) *ExchangeHandler {
 	return &ExchangeHandler{
-		services: s,
+		service: s,
 	}
 }
 
@@ -26,10 +25,10 @@ func NewExchangeHandler(s *service.Services) *ExchangeHandler {
 //	@Success	200		{integer}   integer
 //	@Failure	400		{object}	ErrorResponse
 //	@Router		/rate [get]
-func (h ExchangeHandler) GetCurrencyRate(c *fiber.Ctx) error {
-	rate, err := h.services.Exchange.GetCurrencyRate(config.Get())
+func (h *ExchangeHandler) GetCurrencyRate(c *fiber.Ctx) error {
+	rate, err := h.service.GetCurrencyRate()
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(responses.ErrorResponse{Message: err.Error()})
 	}
 
 	return c.JSON(rate)

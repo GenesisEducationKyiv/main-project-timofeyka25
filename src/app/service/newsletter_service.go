@@ -2,52 +2,51 @@ package service
 
 import (
 	"fmt"
-	"genesis-test/src/app/customerror"
 	"genesis-test/src/app/domain"
-	"genesis-test/src/app/repository"
-	"genesis-test/src/config"
+	"genesis-test/src/app/handler"
 
 	"github.com/pkg/errors"
 )
 
 type newsletterService struct {
-	repos *repository.Repositories
+	repos *Repositories
+	pair  *domain.CurrencyPair
 }
 
-func NewNewsletterService(r *repository.Repositories) domain.NewsletterService {
-	return newsletterService{repos: r}
+func NewNewsletterService(
+	repos *Repositories,
+	pair *domain.CurrencyPair,
+) handler.NewsletterService {
+	return &newsletterService{
+		repos: repos,
+		pair:  pair,
+	}
 }
 
-func (m newsletterService) SendEmails() ([]string, error) {
-	cfg := config.Get()
-
-	rate, err := m.repos.Exchange.GetCurrencyRate(cfg.BaseCurrency, cfg.QuoteCurrency)
+func (s *newsletterService) SendCurrencyRate() ([]string, error) {
+	rate, err := s.repos.Exchange.GetCurrencyRate(s.pair)
 	if err != nil {
 		return nil, errors.Wrap(err, "get rate")
 	}
 
-	body := fmt.Sprintf("The current exchange rate of %s to %s is %s %s",
-		rate.BaseCurrency,
-		rate.QuoteCurrency,
-		rate.Price,
-		rate.QuoteCurrency)
-
-	return m.repos.Newsletter.SendToSubscribedEmails(body)
+	return s.sendToSubscribed(s.buildMessage(rate))
 }
 
-func (m newsletterService) Subscribe(subscriber *domain.Subscriber) error {
-	if subscriber == nil {
-		return customerror.ErrNoDataProvided
-	}
-	subscribed, err := m.repos.Newsletter.GetSubscribedEmails()
-	if err != nil && !errors.Is(err, customerror.ErrNoSubscribers) {
-		return errors.Wrap(err, "get emails")
-	}
-
-	err = m.repos.Newsletter.AddNewEmail(subscribed, subscriber.Email)
+func (s *newsletterService) sendToSubscribed(message *domain.EmailMessage) ([]string, error) {
+	subscribers, err := s.repos.Storage.GetAllEmails()
 	if err != nil {
-		return errors.Wrap(err, "add email")
+		return nil, errors.Wrap(err, "send to subscribed")
 	}
+	return s.repos.Newsletter.MultipleSending(subscribers, message)
+}
 
-	return nil
+func (s *newsletterService) buildMessage(rate *domain.CurrencyRate) *domain.EmailMessage {
+	return &domain.EmailMessage{
+		Subject: "Crypto Exchange Newsletter",
+		Body: fmt.Sprintf("The current exchange rate of %s to %s is %f %s",
+			rate.BaseCurrency,
+			rate.QuoteCurrency,
+			rate.Price,
+			rate.QuoteCurrency),
+	}
 }

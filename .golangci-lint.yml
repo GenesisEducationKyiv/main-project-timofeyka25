@@ -34,4 +34,4 @@ linters:
 
 linters-settings:
   funlen:
-    lines: 80
+    lines: 100

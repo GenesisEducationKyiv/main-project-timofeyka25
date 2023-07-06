@@ -2,10 +2,7 @@ package service
 
 import (
 	"genesis-test/src/app/domain"
-	mocks "genesis-test/src/app/domain/mocks"
-	"genesis-test/src/app/repository"
-	"genesis-test/src/config"
-	"strconv"
+	"genesis-test/src/app/domain/mocks"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -17,28 +14,23 @@ func TestExchangeService_GetCurrencyRate(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockExchangeRepo := mocks.NewMockExchangeRepository(ctrl)
-	repos := &repository.Repositories{
-		Exchange: mockExchangeRepo,
-	}
 
-	excService := NewExchangeService(repos)
-
-	cfg := &config.Config{
+	BTCUAHPair := &domain.CurrencyPair{
 		BaseCurrency:  "BTC",
 		QuoteCurrency: "UAH",
 	}
 
+	excService := NewExchangeService(BTCUAHPair, mockExchangeRepo)
+
 	mockResponse := &domain.CurrencyRate{
-		Price:         "888888",
-		BaseCurrency:  cfg.BaseCurrency,
-		QuoteCurrency: cfg.QuoteCurrency,
+		Price:        123456,
+		CurrencyPair: *BTCUAHPair,
 	}
 
-	mockExchangeRepo.EXPECT().GetCurrencyRate(cfg.BaseCurrency, cfg.QuoteCurrency).Return(mockResponse, nil)
-	rate, err := excService.GetCurrencyRate(cfg)
+	mockExchangeRepo.EXPECT().GetCurrencyRate(BTCUAHPair).Return(mockResponse, nil)
+	rate, err := excService.GetCurrencyRate()
 	require.NoError(t, err)
 
-	rateInt, err := strconv.Atoi(mockResponse.Price)
 	require.NoError(t, err)
-	require.Equal(t, rateInt, rate)
+	require.Equalf(t, mockResponse.Price, rate, "rates are not equal")
 }

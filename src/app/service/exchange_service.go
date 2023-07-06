@@ -2,28 +2,31 @@ package service
 
 import (
 	"genesis-test/src/app/domain"
-	"genesis-test/src/app/repository"
-	"genesis-test/src/config"
-	"strconv"
+	"genesis-test/src/app/handler"
 
 	"github.com/pkg/errors"
 )
 
 type exchangeService struct {
-	repos *repository.Repositories
+	pair         *domain.CurrencyPair
+	exchangeRepo ExchangeRepository
 }
 
-func NewExchangeService(r *repository.Repositories) domain.ExchangeService {
+func NewExchangeService(
+	pair *domain.CurrencyPair,
+	exchangeRepo ExchangeRepository,
+) handler.ExchangeService {
 	return &exchangeService{
-		repos: r,
+		pair:         pair,
+		exchangeRepo: exchangeRepo,
 	}
 }
 
-func (c exchangeService) GetCurrencyRate(cfg *config.Config) (int, error) {
-	rate, err := c.repos.Exchange.GetCurrencyRate(cfg.BaseCurrency, cfg.QuoteCurrency)
+func (c *exchangeService) GetCurrencyRate() (float64, error) {
+	rate, err := c.exchangeRepo.GetCurrencyRate(c.pair)
 	if err != nil {
 		return 0, errors.Wrap(err, "get rate")
 	}
 
-	return strconv.Atoi(rate.Price)
+	return rate.Price, nil
 }
