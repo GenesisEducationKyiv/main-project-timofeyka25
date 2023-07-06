@@ -17,7 +17,7 @@ import (
 
 func TestNewsletterHandler_Subscribe(t *testing.T) {
 	loadEnvironment(t)
-	if err := os.Setenv("STORAGE_FILE_PATH", "../../../storage/csv/data_test.csv"); err != nil {
+	if err := os.Setenv("STORAGE_FILE_PATH", "../../src/storage/csv/data_test.csv"); err != nil {
 		t.Fatalf("failed to set STORAGE_FILE_PATH: %v", err)
 	}
 	if err := clearFile(os.Getenv("STORAGE_FILE_PATH")); err != nil {
@@ -76,7 +76,7 @@ func TestNewsletterHandler_Subscribe(t *testing.T) {
 
 func TestNewsletterHandler_SendEmails(t *testing.T) {
 	loadEnvironment(t)
-	if err := os.Setenv("STORAGE_FILE_PATH", "../../../storage/csv/data_test.csv"); err != nil {
+	if err := os.Setenv("STORAGE_FILE_PATH", "../../src/storage/csv/data_test.csv"); err != nil {
 		t.Fatalf("failed to set STORAGE_FILE_PATH: %v", err)
 	}
 
@@ -138,7 +138,7 @@ func clearFile(filename string) error {
 }
 
 func loadEnvironment(t *testing.T) {
-	if err := godotenv.Load("../../../../test.env"); err != nil {
+	if err := godotenv.Load("../../test.env"); err != nil {
 		t.Fatal("Failed to load .env file")
 	}
 }

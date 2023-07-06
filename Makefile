@@ -2,9 +2,12 @@
 start:
 	go run src/cmd/main.go
 
-.PHONY: start_test
-start_test:
-	go run src/cmd/main.go --test=true
+.PHONY: e2e_test
+e2e_test:
+	go run src/cmd/main.go --test=true & \
+        PID=$$!; \
+      	go test ./tests/e2e/... -v; \
+        kill $$PID
 
 .PHONY: gen_docs
 gen_docs:
@@ -12,7 +15,7 @@ gen_docs:
 
 .PHONY: test
 test:
-	go test ./... -v
+	go test ./src/... -v
 
 .PHONY: lint
 lint:
