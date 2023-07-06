@@ -1,8 +1,8 @@
 package newsletter
 
 import (
-	"genesis-test/src/app/domain"
-	"genesis-test/src/app/domain/mocks"
+	"genesis-test/src/app/application/mocks"
+	"genesis-test/src/app/domain/model"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -14,22 +14,22 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 	type mockBehavior func(mockExchangeChain *mocks.MockExchangeChain,
 		mockNewsletterSender *mocks.MockNewsletterSender,
 		mockEmailStorage *mocks.MockEmailStorage,
-		mockExchangeResp *domain.CurrencyRate,
+		mockExchangeResp *model.CurrencyRate,
 		mockNewsletterResp []string,
 	)
 
 	cases := []struct {
 		name                   string
-		mockExchangeResponse   *domain.CurrencyRate
+		mockExchangeResponse   *model.CurrencyRate
 		mockNewsletterResponse []string
 		mockBehavior           mockBehavior
 		isErrorExpected        bool
 	}{
 		{
 			name: "OK",
-			mockExchangeResponse: &domain.CurrencyRate{
+			mockExchangeResponse: &model.CurrencyRate{
 				Price: 123,
-				CurrencyPair: domain.CurrencyPair{
+				CurrencyPair: model.CurrencyPair{
 					BaseCurrency:  "BTC",
 					QuoteCurrency: "UAH",
 				},
@@ -39,15 +39,15 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 				mockExchangeChain *mocks.MockExchangeChain,
 				mockNewsletterSender *mocks.MockNewsletterSender,
 				mockEmailStorage *mocks.MockEmailStorage,
-				mockExchangeResp *domain.CurrencyRate,
+				mockExchangeResp *model.CurrencyRate,
 				mockNewsletterResp []string,
 			) {
-				mockExchangeChain.EXPECT().GetCurrencyRate(&domain.CurrencyPair{
+				mockExchangeChain.EXPECT().GetCurrencyRate(&model.CurrencyPair{
 					BaseCurrency:  "BTC",
 					QuoteCurrency: "UAH",
 				}).Return(mockExchangeResp, nil)
 				mockEmailStorage.EXPECT().GetAllEmails().Return([]string{"abc@test.com"}, nil)
-				mockNewsletterSender.EXPECT().MultipleSending([]string{"abc@test.com"}, &domain.EmailMessage{
+				mockNewsletterSender.EXPECT().MultipleSending([]string{"abc@test.com"}, &model.EmailMessage{
 					Subject: "Crypto Exchange Newsletter",
 					Body:    "The current exchange rate of BTC to UAH is 123.000000 UAH",
 				}).Return(mockNewsletterResp, nil)
@@ -60,10 +60,10 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 				mockExchangeChain *mocks.MockExchangeChain,
 				mockNewsletterSender *mocks.MockNewsletterSender,
 				mockEmailStorage *mocks.MockEmailStorage,
-				mockExchangeResp *domain.CurrencyRate,
+				mockExchangeResp *model.CurrencyRate,
 				mockNewsletterResp []string,
 			) {
-				mockExchangeChain.EXPECT().GetCurrencyRate(&domain.CurrencyPair{
+				mockExchangeChain.EXPECT().GetCurrencyRate(&model.CurrencyPair{
 					BaseCurrency:  "BTC",
 					QuoteCurrency: "UAH",
 				}).Return(nil,
@@ -86,7 +86,7 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 				mockExchangeChain,
 				mockEmailRepository,
 				mockNewsletterSender,
-				&domain.CurrencyPair{
+				&model.CurrencyPair{
 					BaseCurrency:  "BTC",
 					QuoteCurrency: "UAH",
 				})

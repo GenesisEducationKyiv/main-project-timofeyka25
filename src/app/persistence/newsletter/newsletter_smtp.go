@@ -2,8 +2,8 @@ package newsletter
 
 import (
 	"fmt"
-	"genesis-test/src/app/domain"
-	"genesis-test/src/app/service"
+	"genesis-test/src/app/application"
+	"genesis-test/src/app/domain/model"
 	"genesis-test/src/pkg/mailer"
 	"log"
 
@@ -14,13 +14,13 @@ type newsletterSMTPSender struct {
 	mailer *mailer.SMTPMailer
 }
 
-func NewNewsletterSender(mailer *mailer.SMTPMailer) service.NewsletterSender {
+func NewNewsletterSender(mailer *mailer.SMTPMailer) application.NewsletterSender {
 	return &newsletterSMTPSender{
 		mailer: mailer,
 	}
 }
 
-func (r *newsletterSMTPSender) MultipleSending(subscribers []string, msg *domain.EmailMessage) ([]string, error) {
+func (r *newsletterSMTPSender) MultipleSending(subscribers []string, msg *model.EmailMessage) ([]string, error) {
 	var unsent []string
 
 	body := fmt.Sprintf("Subject: %s\r\n%s", msg.Subject, msg.Body)

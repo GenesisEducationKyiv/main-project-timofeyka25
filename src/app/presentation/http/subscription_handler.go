@@ -1,9 +1,10 @@
-package handler
+package http
 
 import (
 	"genesis-test/src/app/customerror"
 	"genesis-test/src/app/domain"
-	"genesis-test/src/app/handler/responses"
+	"genesis-test/src/app/domain/model"
+	"genesis-test/src/app/presentation/http/responses"
 	"net/mail"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,10 +12,10 @@ import (
 )
 
 type SubscriptionHandler struct {
-	service SubscriptionService
+	service domain.SubscriptionService
 }
 
-func NewSubscriptionHandler(s SubscriptionService) *SubscriptionHandler {
+func NewSubscriptionHandler(s domain.SubscriptionService) *SubscriptionHandler {
 	return &SubscriptionHandler{
 		service: s,
 	}
@@ -32,7 +33,7 @@ func NewSubscriptionHandler(s SubscriptionService) *SubscriptionHandler {
 //	@Failure	500 {object}	ErrorResponse
 //	@Router		/subscribe [post]
 func (h *SubscriptionHandler) Subscribe(c *fiber.Ctx) error {
-	subscriber := new(domain.Subscriber)
+	subscriber := new(model.Subscriber)
 
 	if err := c.BodyParser(subscriber); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(responses.ErrorResponse{Message: err.Error()})

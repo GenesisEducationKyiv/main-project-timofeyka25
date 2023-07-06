@@ -1,16 +1,16 @@
-package handler
+package http
 
 import (
-	"genesis-test/src/app/handler/responses"
-
+	"genesis-test/src/app/domain"
+	"genesis-test/src/app/presentation/http/responses"
 	"github.com/gofiber/fiber/v2"
 )
 
 type NewsletterHandler struct {
-	service NewsletterService
+	service domain.NewsletterService
 }
 
-func NewNewsletterHandler(s NewsletterService) *NewsletterHandler {
+func NewNewsletterHandler(s domain.NewsletterService) *NewsletterHandler {
 	return &NewsletterHandler{
 		service: s,
 	}

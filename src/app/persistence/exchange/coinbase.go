@@ -2,8 +2,8 @@ package exchange
 
 import (
 	"fmt"
-	"genesis-test/src/app/domain"
-	"genesis-test/src/app/service"
+	"genesis-test/src/app/application"
+	"genesis-test/src/app/domain/model"
 	"genesis-test/src/app/utils"
 	"genesis-test/src/config"
 	"strconv"
@@ -11,7 +11,7 @@ import (
 
 type CoinbaseFactory struct{}
 
-func (f CoinbaseFactory) CreateCoinbaseFactory() service.ExchangeChain {
+func (f CoinbaseFactory) CreateCoinbaseFactory() application.ExchangeChain {
 	return &coinbaseProvider{
 		coinbaseURL: config.Get().CoinbaseURL,
 	}
@@ -19,7 +19,7 @@ func (f CoinbaseFactory) CreateCoinbaseFactory() service.ExchangeChain {
 
 type coinbaseProvider struct {
 	coinbaseURL string
-	next        service.ExchangeChain
+	next        application.ExchangeChain
 }
 
 type coinbaseResponse struct {
@@ -30,7 +30,7 @@ type coinbaseResponse struct {
 	} `json:"data"`
 }
 
-func (c *coinbaseProvider) GetCurrencyRate(pair *domain.CurrencyPair) (*domain.CurrencyRate, error) {
+func (c *coinbaseProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := c.getCurrencyRate(pair)
 	if err != nil && c.next != nil {
 		return c.next.GetCurrencyRate(pair)
@@ -39,11 +39,11 @@ func (c *coinbaseProvider) GetCurrencyRate(pair *domain.CurrencyPair) (*domain.C
 	return rate, nil
 }
 
-func (c *coinbaseProvider) SetNext(chain service.ExchangeChain) {
+func (c *coinbaseProvider) SetNext(chain application.ExchangeChain) {
 	c.next = chain
 }
 
-func (c *coinbaseProvider) getCurrencyRate(pair *domain.CurrencyPair) (*domain.CurrencyRate, error) {
+func (c *coinbaseProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	resp, err := c.doRequest(pair)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (c *coinbaseProvider) getCurrencyRate(pair *domain.CurrencyPair) (*domain.C
 	return resp.toDefaultRate()
 }
 
-func (c *coinbaseProvider) doRequest(pair *domain.CurrencyPair) (*coinbaseResponse, error) {
+func (c *coinbaseProvider) doRequest(pair *model.CurrencyPair) (*coinbaseResponse, error) {
 	url := fmt.Sprintf(
 		c.coinbaseURL,
 		pair.GetBaseCurrency(),
@@ -66,17 +66,17 @@ func (c *coinbaseProvider) doRequest(pair *domain.CurrencyPair) (*coinbaseRespon
 	return rate, nil
 }
 
-func (c *coinbaseResponse) toDefaultRate() (*domain.CurrencyRate, error) {
+func (c *coinbaseResponse) toDefaultRate() (*model.CurrencyRate, error) {
 	bitSize := 64
 	floatPrice, err := strconv.ParseFloat(c.Data.Amount, bitSize)
 	if err != nil {
 		return nil, err
 	}
-	return &domain.CurrencyRate{
+	return &model.CurrencyRate{
 		Price: floatPrice,
-		CurrencyPair: domain.CurrencyPair{
-			BaseCurrency:  c.Data.BaseCurrency,
-			QuoteCurrency: c.Data.QuoteCurrency,
+		CurrencyPair: model.CurrencyPair{
+			BaseCurrency:  model.CurrencyFactory{}.CreateCurrency(c.Data.BaseCurrency),
+			QuoteCurrency: model.CurrencyFactory{}.CreateCurrency(c.Data.QuoteCurrency),
 		},
 	}, nil
 }

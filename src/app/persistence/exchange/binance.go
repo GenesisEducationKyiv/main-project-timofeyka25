@@ -2,8 +2,8 @@ package exchange
 
 import (
 	"fmt"
-	"genesis-test/src/app/domain"
-	"genesis-test/src/app/service"
+	"genesis-test/src/app/application"
+	"genesis-test/src/app/domain/model"
 	"genesis-test/src/app/utils"
 	"genesis-test/src/config"
 	"strconv"
@@ -11,7 +11,7 @@ import (
 
 type BinanceFactory struct{}
 
-func (f BinanceFactory) CreateBinanceFactory() service.ExchangeChain {
+func (f BinanceFactory) CreateBinanceFactory() application.ExchangeChain {
 	return &binanceProvider{
 		binanceURL: config.Get().BinanceURL,
 	}
@@ -19,10 +19,10 @@ func (f BinanceFactory) CreateBinanceFactory() service.ExchangeChain {
 
 type binanceProvider struct {
 	binanceURL string
-	next       service.ExchangeChain
+	next       application.ExchangeChain
 }
 
-func (b *binanceProvider) GetCurrencyRate(pair *domain.CurrencyPair) (*domain.CurrencyRate, error) {
+func (b *binanceProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := b.getCurrencyRate(pair)
 	if err != nil && b.next != nil {
 		return b.next.GetCurrencyRate(pair)
@@ -31,11 +31,11 @@ func (b *binanceProvider) GetCurrencyRate(pair *domain.CurrencyPair) (*domain.Cu
 	return rate, nil
 }
 
-func (b *binanceProvider) SetNext(chain service.ExchangeChain) {
+func (b *binanceProvider) SetNext(chain application.ExchangeChain) {
 	b.next = chain
 }
 
-func (b *binanceProvider) getCurrencyRate(pair *domain.CurrencyPair) (*domain.CurrencyRate, error) {
+func (b *binanceProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	resp, err := b.doRequest(pair)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (b *binanceProvider) getCurrencyRate(pair *domain.CurrencyPair) (*domain.Cu
 	return resp.toDefaultRate()
 }
 
-func (b *binanceProvider) doRequest(pair *domain.CurrencyPair) (*binanceResponse, error) {
+func (b *binanceProvider) doRequest(pair *model.CurrencyPair) (*binanceResponse, error) {
 	url := fmt.Sprintf(
 		b.binanceURL,
 		pair.GetBaseCurrency(),
@@ -54,8 +54,8 @@ func (b *binanceProvider) doRequest(pair *domain.CurrencyPair) (*binanceResponse
 	if err != nil {
 		return nil, err
 	}
-	rate.BaseCurrency = pair.BaseCurrency
-	rate.QuoteCurrency = pair.QuoteCurrency
+	rate.BaseCurrency = pair.BaseCurrency.ToString()
+	rate.QuoteCurrency = pair.QuoteCurrency.ToString()
 
 	return rate, nil
 }
@@ -66,17 +66,17 @@ type binanceResponse struct {
 	QuoteCurrency string
 }
 
-func (b *binanceResponse) toDefaultRate() (*domain.CurrencyRate, error) {
+func (b *binanceResponse) toDefaultRate() (*model.CurrencyRate, error) {
 	bitSize := 64
 	floatPrice, err := strconv.ParseFloat(b.Price, bitSize)
 	if err != nil {
 		return nil, err
 	}
-	return &domain.CurrencyRate{
+	return &model.CurrencyRate{
 		Price: floatPrice,
-		CurrencyPair: domain.CurrencyPair{
-			BaseCurrency:  b.BaseCurrency,
-			QuoteCurrency: b.QuoteCurrency,
+		CurrencyPair: model.CurrencyPair{
+			BaseCurrency:  model.CurrencyFactory{}.CreateCurrency(b.BaseCurrency),
+			QuoteCurrency: model.CurrencyFactory{}.CreateCurrency(b.QuoteCurrency),
 		},
 	}, nil
 }

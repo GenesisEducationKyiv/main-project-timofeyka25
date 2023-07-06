@@ -1,16 +1,16 @@
-package handler
+package http
 
 import (
-	"genesis-test/src/app/handler/responses"
-
+	"genesis-test/src/app/domain"
+	"genesis-test/src/app/presentation/http/responses"
 	"github.com/gofiber/fiber/v2"
 )
 
 type ExchangeHandler struct {
-	service ExchangeService
+	service domain.ExchangeService
 }
 
-func NewExchangeHandler(s ExchangeService) *ExchangeHandler {
+func NewExchangeHandler(s domain.ExchangeService) *ExchangeHandler {
 	return &ExchangeHandler{
 		service: s,
 	}

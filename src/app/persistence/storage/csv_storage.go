@@ -1,8 +1,8 @@
 package storage
 
 import (
+	"genesis-test/src/app/application"
 	"genesis-test/src/app/customerror"
-	"genesis-test/src/app/service"
 	"genesis-test/src/app/utils"
 
 	"github.com/pkg/errors"
@@ -12,7 +12,7 @@ type csvRepository struct {
 	filepath string
 }
 
-func NewCsvRepository(filepath string) service.EmailStorage {
+func NewCsvRepository(filepath string) application.EmailStorage {
 	return &csvRepository{filepath: filepath}
 }
 

@@ -1,9 +1,9 @@
 package subscription
 
 import (
+	"genesis-test/src/app/application/mocks"
 	"genesis-test/src/app/customerror"
-	"genesis-test/src/app/domain"
-	"genesis-test/src/app/domain/mocks"
+	"genesis-test/src/app/domain/model"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -11,38 +11,38 @@ import (
 )
 
 func TestSubscriptionService_Subscribe(t *testing.T) {
-	type mockBehavior func(r *mocks.MockEmailStorage, s *domain.Subscriber)
+	type mockBehavior func(r *mocks.MockEmailStorage, s *model.Subscriber)
 
 	cases := []struct {
 		name          string
-		subscriber    *domain.Subscriber
+		subscriber    *model.Subscriber
 		mockBehavior  mockBehavior
 		expectedError error
 	}{
 		{
 			name: "Subscribe successful",
-			subscriber: &domain.Subscriber{
+			subscriber: &model.Subscriber{
 				Email: "test@testexample.com",
 			},
 
 			mockBehavior: func(
 				r *mocks.MockEmailStorage,
-				s *domain.Subscriber,
+				s *model.Subscriber,
 			) {
 				r.EXPECT().AddEmail(s.Email).Return(nil)
 			},
 		},
 		{
 			name:          "Subscribe error (no data)",
-			mockBehavior:  func(r *mocks.MockEmailStorage, s *domain.Subscriber) {},
+			mockBehavior:  func(r *mocks.MockEmailStorage, s *model.Subscriber) {},
 			expectedError: customerror.ErrNoDataProvided,
 		},
 		{
 			name: "Subscribe error (already exists)",
-			subscriber: &domain.Subscriber{
+			subscriber: &model.Subscriber{
 				Email: "test@testexample.com",
 			},
-			mockBehavior: func(r *mocks.MockEmailStorage, s *domain.Subscriber) {
+			mockBehavior: func(r *mocks.MockEmailStorage, s *model.Subscriber) {
 				r.EXPECT().AddEmail(s.Email).Return(customerror.ErrAlreadyExists)
 			},
 			expectedError: customerror.ErrAlreadyExists,

@@ -1,15 +1,15 @@
 package exchange
 
 import (
-	"genesis-test/src/app/domain"
-	"genesis-test/src/app/service"
+	"genesis-test/src/app/application"
+	"genesis-test/src/app/domain/model"
 	"genesis-test/src/app/utils"
 	"genesis-test/src/config"
 )
 
 type CoingeckoFactory struct{}
 
-func (f CoingeckoFactory) CreateCoingeckoFactory() service.ExchangeChain {
+func (f CoingeckoFactory) CreateCoingeckoFactory() application.ExchangeChain {
 	return &coingeckoProvider{
 		coingeckoURL: config.Get().CoingeckoURL,
 	}
@@ -17,10 +17,10 @@ func (f CoingeckoFactory) CreateCoingeckoFactory() service.ExchangeChain {
 
 type coingeckoProvider struct {
 	coingeckoURL string
-	next         service.ExchangeChain
+	next         application.ExchangeChain
 }
 
-func (c *coingeckoProvider) GetCurrencyRate(pair *domain.CurrencyPair) (*domain.CurrencyRate, error) {
+func (c *coingeckoProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := c.getCurrencyRate(pair)
 	if err != nil && c.next != nil {
 		return c.next.GetCurrencyRate(pair)
@@ -29,11 +29,11 @@ func (c *coingeckoProvider) GetCurrencyRate(pair *domain.CurrencyPair) (*domain.
 	return rate, nil
 }
 
-func (c *coingeckoProvider) SetNext(chain service.ExchangeChain) {
+func (c *coingeckoProvider) SetNext(chain application.ExchangeChain) {
 	c.next = chain
 }
 
-func (c *coingeckoProvider) getCurrencyRate(pair *domain.CurrencyPair) (*domain.CurrencyRate, error) {
+func (c *coingeckoProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	resp, err := c.doRequest(pair)
 	if err != nil {
 		return nil, err
@@ -41,14 +41,14 @@ func (c *coingeckoProvider) getCurrencyRate(pair *domain.CurrencyPair) (*domain.
 	return resp.toDefaultRate()
 }
 
-func (c *coingeckoProvider) doRequest(pair *domain.CurrencyPair) (*coingeckoResponse, error) {
+func (c *coingeckoProvider) doRequest(pair *model.CurrencyPair) (*coingeckoResponse, error) {
 	rate := new(coingeckoResponse)
 	err := utils.GetAndParse(c.coingeckoURL, &rate)
 	if err != nil {
 		return nil, err
 	}
-	rate.BaseCurrency = pair.BaseCurrency
-	rate.QuoteCurrency = pair.QuoteCurrency
+	rate.BaseCurrency = pair.BaseCurrency.ToString()
+	rate.QuoteCurrency = pair.QuoteCurrency.ToString()
 
 	return rate, nil
 }
@@ -63,12 +63,12 @@ type coingeckoResponse struct {
 	QuoteCurrency string
 }
 
-func (c *coingeckoResponse) toDefaultRate() (*domain.CurrencyRate, error) {
-	return &domain.CurrencyRate{
+func (c *coingeckoResponse) toDefaultRate() (*model.CurrencyRate, error) {
+	return &model.CurrencyRate{
 		Price: c.Rates.QuoteCurrency.Price,
-		CurrencyPair: domain.CurrencyPair{
-			BaseCurrency:  c.BaseCurrency,
-			QuoteCurrency: c.QuoteCurrency,
+		CurrencyPair: model.CurrencyPair{
+			BaseCurrency:  model.CurrencyFactory{}.CreateCurrency(c.BaseCurrency),
+			QuoteCurrency: model.CurrencyFactory{}.CreateCurrency(c.QuoteCurrency),
 		},
 	}, nil
 }

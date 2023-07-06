@@ -1,22 +1,21 @@
 package exchange
 
 import (
+	"genesis-test/src/app/application"
 	"genesis-test/src/app/domain"
-	"genesis-test/src/app/handler"
-	"genesis-test/src/app/service"
-
+	"genesis-test/src/app/domain/model"
 	"github.com/pkg/errors"
 )
 
 type exchangeService struct {
-	pair             *domain.CurrencyPair
-	exchangeProvider service.ExchangeChain
+	pair             *model.CurrencyPair
+	exchangeProvider application.ExchangeChain
 }
 
 func NewExchangeService(
-	pair *domain.CurrencyPair,
-	exchangeProvider service.ExchangeChain,
-) handler.ExchangeService {
+	pair *model.CurrencyPair,
+	exchangeProvider application.ExchangeChain,
+) domain.ExchangeService {
 	return &exchangeService{
 		pair:             pair,
 		exchangeProvider: exchangeProvider,
