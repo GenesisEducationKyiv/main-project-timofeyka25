@@ -2,18 +2,20 @@ package http
 
 import (
 	"genesis-test/src/app/domain"
-	"genesis-test/src/app/presentation/http/responses"
+	"genesis-test/src/app/presentation/http/response"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type NewsletterHandler struct {
-	service domain.NewsletterService
+	service   domain.NewsletterService
+	presenter ResponsePresenter
 }
 
-func NewNewsletterHandler(s domain.NewsletterService) *NewsletterHandler {
+func NewNewsletterHandler(s domain.NewsletterService, p ResponsePresenter) *NewsletterHandler {
 	return &NewsletterHandler{
-		service: s,
+		service:   s,
+		presenter: p,
 	}
 }
 
@@ -28,11 +30,13 @@ func NewNewsletterHandler(s domain.NewsletterService) *NewsletterHandler {
 func (h NewsletterHandler) SendEmails(c *fiber.Ctx) error {
 	unsent, err := h.service.SendCurrencyRate()
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(responses.ErrorResponse{Message: err.Error()})
+		return h.presenter.PresentError(c.Status(fiber.StatusBadRequest), &response.ErrorResponse{
+			Message: err.Error(),
+		})
 	}
 
 	if len(unsent) > 0 {
-		return c.JSON(responses.SendRateResponse{UnsentEmails: unsent})
+		return h.presenter.PresentSendRate(c, &response.SendRateResponse{UnsentEmails: unsent})
 	}
 
 	return c.SendStatus(fiber.StatusOK)

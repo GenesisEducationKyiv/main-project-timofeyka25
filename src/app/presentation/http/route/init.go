@@ -5,6 +5,7 @@ import (
 	"genesis-test/src/app/api"
 	"genesis-test/src/app/presentation/http"
 	"genesis-test/src/app/presentation/http/middleware"
+	"genesis-test/src/app/presentation/http/presenter"
 
 	"github.com/gofiber/fiber/v2"
 	swagger "github.com/swaggo/fiber-swagger"
@@ -13,9 +14,11 @@ import (
 func InitRoutes(app *fiber.App) {
 	newPersistence := api.CreatePersistence()
 	newServices := api.CreateServices(newPersistence)
-	newsletterHandler := http.NewNewsletterHandler(newServices.Newsletter)
-	exchangeHandler := http.NewExchangeHandler(newServices.Exchange)
-	subscriptionHandler := http.NewSubscriptionHandler(newServices.Subscription)
+
+	jsonPresenter := presenter.NewJSONPresenter()
+	newsletterHandler := http.NewNewsletterHandler(newServices.Newsletter, jsonPresenter)
+	exchangeHandler := http.NewExchangeHandler(newServices.Exchange, jsonPresenter)
+	subscriptionHandler := http.NewSubscriptionHandler(newServices.Subscription, jsonPresenter)
 
 	middleware.FiberMiddleware(app)
 
