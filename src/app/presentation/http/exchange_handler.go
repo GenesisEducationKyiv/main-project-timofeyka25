@@ -4,6 +4,7 @@ import (
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/domain/model"
 	"genesis-test/src/app/presentation/http/response"
+	"genesis-test/src/app/presentation/http/route"
 	"genesis-test/src/config"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +15,7 @@ type ExchangeHandler struct {
 	presenter ResponsePresenter
 }
 
-func NewExchangeHandler(s domain.ExchangeService, p ResponsePresenter) *ExchangeHandler {
+func NewExchangeHandler(s domain.ExchangeService, p ResponsePresenter) route.ExchangeHandler {
 	return &ExchangeHandler{
 		service:   s,
 		presenter: p,

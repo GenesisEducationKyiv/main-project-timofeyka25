@@ -5,6 +5,7 @@ import (
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/domain/model"
 	"genesis-test/src/app/presentation/http/response"
+	"genesis-test/src/app/presentation/http/route"
 	"net/mail"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,7 +17,7 @@ type SubscriptionHandler struct {
 	presenter ResponsePresenter
 }
 
-func NewSubscriptionHandler(s domain.SubscriptionService, p ResponsePresenter) *SubscriptionHandler {
+func NewSubscriptionHandler(s domain.SubscriptionService, p ResponsePresenter) route.SubscriptionHandler {
 	return &SubscriptionHandler{
 		service:   s,
 		presenter: p,

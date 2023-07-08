@@ -3,6 +3,7 @@ package http
 import (
 	"genesis-test/src/app/domain"
 	"genesis-test/src/app/presentation/http/response"
+	"genesis-test/src/app/presentation/http/route"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,7 +13,7 @@ type NewsletterHandler struct {
 	presenter ResponsePresenter
 }
 
-func NewNewsletterHandler(s domain.NewsletterService, p ResponsePresenter) *NewsletterHandler {
+func NewNewsletterHandler(s domain.NewsletterService, p ResponsePresenter) route.NewsletterHandler {
 	return &NewsletterHandler{
 		service:   s,
 		presenter: p,
