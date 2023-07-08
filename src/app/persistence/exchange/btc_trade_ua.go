@@ -18,7 +18,6 @@ func (f BTCTradeUAFactory) CreateBTCTradeUAFactory() application.ExchangeProvide
 
 type btcTradeUAProvider struct {
 	btcTradeUAURL string
-	next          application.ExchangeProvider
 }
 
 func (b *btcTradeUAProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {

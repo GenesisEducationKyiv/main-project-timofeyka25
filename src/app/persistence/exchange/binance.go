@@ -19,7 +19,6 @@ func (f BinanceFactory) CreateBinanceFactory() application.ExchangeProvider {
 
 type binanceProvider struct {
 	binanceURL string
-	next       application.ExchangeProvider
 }
 
 func (b *binanceProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {

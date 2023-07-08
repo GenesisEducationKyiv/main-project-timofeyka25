@@ -17,7 +17,6 @@ func (f CoingeckoFactory) CreateCoingeckoFactory() application.ExchangeProvider 
 
 type coingeckoProvider struct {
 	coingeckoURL string
-	next         application.ExchangeProvider
 }
 
 func (c *coingeckoProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {

@@ -19,7 +19,6 @@ func (f CoinbaseFactory) CreateCoinbaseFactory() application.ExchangeProvider {
 
 type coinbaseProvider struct {
 	coinbaseURL string
-	next        application.ExchangeProvider
 }
 
 type coinbaseResponse struct {
