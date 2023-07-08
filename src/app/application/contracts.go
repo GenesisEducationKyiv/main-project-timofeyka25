@@ -15,9 +15,13 @@ type EmailStorage interface {
 	AddEmail(newEmail string) error
 }
 
-type ExchangeChain interface {
+type ExchangeProvider interface {
 	GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error)
-	SetNext(provider ExchangeChain)
+}
+
+type ExchangeProviderNode interface {
+	ExchangeProvider
+	SetNext(provider ExchangeProvider)
 }
 
 type ExchangeLogger interface {
@@ -27,5 +31,5 @@ type ExchangeLogger interface {
 type Persistence struct {
 	Sender    NewsletterSender
 	Storage   EmailStorage
-	Providers ExchangeChain
+	Providers ExchangeProvider
 }

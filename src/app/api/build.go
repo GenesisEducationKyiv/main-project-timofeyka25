@@ -24,34 +24,39 @@ func CreatePersistence() *application.Persistence {
 		cfg.SMTPPassword)
 	csvStorage := storage.NewCsvRepository(cfg.StorageFile)
 	newsletterSender := newsletter.NewNewsletterSender(smtpMailer)
-	exchangerChain := getExchangeChains()
+	exchangerProvider := getExchangeProviders()
 
 	return &application.Persistence{
 		Sender:    newsletterSender,
 		Storage:   csvStorage,
-		Providers: exchangerChain,
+		Providers: exchangerProvider,
 	}
 }
 
-func getExchangeChains() application.ExchangeChain {
+func getExchangeProviders() application.ExchangeProvider {
 	newLogger := logger.NewZapLogger(config.Get().LogPath)
 	exchangeLogger := exchange.NewExchangeLogger(newLogger)
 
-	coinbaseChain := exchange.CoinbaseFactory{}.CreateCoinbaseFactory()
-	binanceChain := exchange.BinanceFactory{}.CreateBinanceFactory()
-	btcTradeChain := exchange.BTCTradeUAFactory{}.CreateBTCTradeUAFactory()
-	coingeckoChain := exchange.CoingeckoFactory{}.CreateCoingeckoFactory()
+	coinbaseProvider := exchange.CoinbaseFactory{}.CreateCoinbaseFactory()
+	binanceProvider := exchange.BinanceFactory{}.CreateBinanceFactory()
+	btcTradeProvider := exchange.BTCTradeUAFactory{}.CreateBTCTradeUAFactory()
+	coingeckoProvider := exchange.CoingeckoFactory{}.CreateCoingeckoFactory()
 
-	coinbaseLoggingChain := exchange.NewLoggingWrapper(coinbaseChain, exchangeLogger)
-	binanceLoggingChain := exchange.NewLoggingWrapper(binanceChain, exchangeLogger)
-	btcTradeLoggingChain := exchange.NewLoggingWrapper(btcTradeChain, exchangeLogger)
-	coingeckoLoggingChain := exchange.NewLoggingWrapper(coingeckoChain, exchangeLogger)
+	coinbaseLoggingProvider := exchange.NewLoggingWrapper(coinbaseProvider, exchangeLogger)
+	binanceLoggingProvider := exchange.NewLoggingWrapper(binanceProvider, exchangeLogger)
+	btcTradeLoggingProvider := exchange.NewLoggingWrapper(btcTradeProvider, exchangeLogger)
+	coingeckoLoggingProvider := exchange.NewLoggingWrapper(coingeckoProvider, exchangeLogger)
 
-	coinbaseLoggingChain.SetNext(binanceLoggingChain)
-	binanceLoggingChain.SetNext(btcTradeLoggingChain)
-	btcTradeLoggingChain.SetNext(coingeckoLoggingChain)
+	coinbaseLoggingProviderNode := exchange.NewProviderNode(coinbaseLoggingProvider)
+	binanceLoggingProviderNode := exchange.NewProviderNode(binanceLoggingProvider)
+	btcTradeLoggingProviderNode := exchange.NewProviderNode(btcTradeLoggingProvider)
+	coingeckoLoggingProviderNode := exchange.NewProviderNode(coingeckoLoggingProvider)
 
-	return coinbaseLoggingChain
+	coinbaseLoggingProviderNode.SetNext(binanceLoggingProviderNode)
+	binanceLoggingProviderNode.SetNext(btcTradeLoggingProviderNode)
+	btcTradeLoggingProviderNode.SetNext(coingeckoLoggingProviderNode)
+
+	return coinbaseLoggingProviderNode
 }
 
 func CreateServices(persistence *application.Persistence) *domain.Services {
@@ -60,9 +65,7 @@ func CreateServices(persistence *application.Persistence) *domain.Services {
 		BaseCurrency:  model.CurrencyFactory{}.CreateCurrency(cfg.BaseCurrency),
 		QuoteCurrency: model.CurrencyFactory{}.CreateCurrency(cfg.QuoteCurrency),
 	}
-	newExchangeService := exchangeService.NewExchangeService(
-		BTCUAHPair,
-		persistence.Providers)
+	newExchangeService := exchangeService.NewExchangeService(persistence.Providers)
 	newNewsletterService := newsletterService.NewNewsletterService(
 		persistence.Providers,
 		persistence.Storage,

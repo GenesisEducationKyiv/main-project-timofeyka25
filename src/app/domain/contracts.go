@@ -5,7 +5,7 @@ import (
 )
 
 type ExchangeService interface {
-	GetCurrencyRate() (float64, error)
+	GetCurrencyRate(pair *model.CurrencyPair) (float64, error)
 }
 
 type NewsletterService interface {

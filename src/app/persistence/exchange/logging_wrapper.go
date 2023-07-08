@@ -7,19 +7,19 @@ import (
 )
 
 type loggingWrapper struct {
-	chain  application.ExchangeChain
-	logger application.ExchangeLogger
+	provider application.ExchangeProvider
+	logger   application.ExchangeLogger
 }
 
-func NewLoggingWrapper(chain application.ExchangeChain, logger application.ExchangeLogger) application.ExchangeChain {
+func NewLoggingWrapper(provider application.ExchangeProvider, logger application.ExchangeLogger) application.ExchangeProvider {
 	return &loggingWrapper{
-		chain:  chain,
-		logger: logger,
+		provider: provider,
+		logger:   logger,
 	}
 }
 
 func (l *loggingWrapper) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
-	rate, err := l.chain.GetCurrencyRate(pair)
+	rate, err := l.provider.GetCurrencyRate(pair)
 	if err != nil {
 		return nil, err
 	}
@@ -28,10 +28,6 @@ func (l *loggingWrapper) GetCurrencyRate(pair *model.CurrencyPair) (*model.Curre
 	return rate, nil
 }
 
-func (l *loggingWrapper) SetNext(chain application.ExchangeChain) {
-	l.chain.SetNext(chain)
-}
-
 func (l *loggingWrapper) getProviderName() string {
-	return reflect.TypeOf(l.chain).Elem().Name()
+	return reflect.TypeOf(l.provider).Elem().Name()
 }

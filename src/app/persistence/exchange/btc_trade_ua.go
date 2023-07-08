@@ -10,7 +10,7 @@ import (
 
 type BTCTradeUAFactory struct{}
 
-func (f BTCTradeUAFactory) CreateBTCTradeUAFactory() application.ExchangeChain {
+func (f BTCTradeUAFactory) CreateBTCTradeUAFactory() application.ExchangeProvider {
 	return &btcTradeUAProvider{
 		btcTradeUAURL: config.Get().BTCTradeUAURL,
 	}
@@ -18,20 +18,16 @@ func (f BTCTradeUAFactory) CreateBTCTradeUAFactory() application.ExchangeChain {
 
 type btcTradeUAProvider struct {
 	btcTradeUAURL string
-	next          application.ExchangeChain
+	next          application.ExchangeProvider
 }
 
 func (b *btcTradeUAProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := b.getCurrencyRate(pair)
-	if err != nil && b.next != nil {
-		return b.next.GetCurrencyRate(pair)
+	if err != nil {
+		return nil, err
 	}
 
 	return rate, nil
-}
-
-func (b *btcTradeUAProvider) SetNext(chain application.ExchangeChain) {
-	b.next = chain
 }
 
 func (b *btcTradeUAProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {

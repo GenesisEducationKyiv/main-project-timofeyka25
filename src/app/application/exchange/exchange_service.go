@@ -9,22 +9,19 @@ import (
 )
 
 type exchangeService struct {
-	pair             *model.CurrencyPair
-	exchangeProvider application.ExchangeChain
+	exchangeProvider application.ExchangeProvider
 }
 
 func NewExchangeService(
-	pair *model.CurrencyPair,
-	exchangeProvider application.ExchangeChain,
+	exchangeProvider application.ExchangeProvider,
 ) domain.ExchangeService {
 	return &exchangeService{
-		pair:             pair,
 		exchangeProvider: exchangeProvider,
 	}
 }
 
-func (c *exchangeService) GetCurrencyRate() (float64, error) {
-	rate, err := c.exchangeProvider.GetCurrencyRate(c.pair)
+func (c *exchangeService) GetCurrencyRate(pair *model.CurrencyPair) (float64, error) {
+	rate, err := c.exchangeProvider.GetCurrencyRate(pair)
 	if err != nil {
 		return 0, errors.Wrap(err, "get rate")
 	}

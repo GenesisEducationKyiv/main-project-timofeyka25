@@ -13,22 +13,22 @@ func TestExchangeService_GetCurrencyRate(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockChain := mocks.NewMockExchangeChain(ctrl)
+	mockProvider := mocks.NewMockExchangeProvider(ctrl)
 
 	BTCUAHPair := &model.CurrencyPair{
 		BaseCurrency:  "BTC",
 		QuoteCurrency: "UAH",
 	}
 
-	excService := NewExchangeService(BTCUAHPair, mockChain)
+	excService := NewExchangeService(mockProvider)
 
 	mockResponse := &model.CurrencyRate{
 		Price:        123456,
 		CurrencyPair: *BTCUAHPair,
 	}
 
-	mockChain.EXPECT().GetCurrencyRate(BTCUAHPair).Return(mockResponse, nil)
-	rate, err := excService.GetCurrencyRate()
+	mockProvider.EXPECT().GetCurrencyRate(BTCUAHPair).Return(mockResponse, nil)
+	rate, err := excService.GetCurrencyRate(BTCUAHPair)
 	require.NoError(t, err)
 
 	require.NoError(t, err)

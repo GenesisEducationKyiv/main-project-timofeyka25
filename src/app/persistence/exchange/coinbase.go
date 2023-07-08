@@ -11,7 +11,7 @@ import (
 
 type CoinbaseFactory struct{}
 
-func (f CoinbaseFactory) CreateCoinbaseFactory() application.ExchangeChain {
+func (f CoinbaseFactory) CreateCoinbaseFactory() application.ExchangeProvider {
 	return &coinbaseProvider{
 		coinbaseURL: config.Get().CoinbaseURL,
 	}
@@ -19,7 +19,7 @@ func (f CoinbaseFactory) CreateCoinbaseFactory() application.ExchangeChain {
 
 type coinbaseProvider struct {
 	coinbaseURL string
-	next        application.ExchangeChain
+	next        application.ExchangeProvider
 }
 
 type coinbaseResponse struct {
@@ -32,15 +32,11 @@ type coinbaseResponse struct {
 
 func (c *coinbaseProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := c.getCurrencyRate(pair)
-	if err != nil && c.next != nil {
-		return c.next.GetCurrencyRate(pair)
+	if err != nil {
+		return nil, err
 	}
 
 	return rate, nil
-}
-
-func (c *coinbaseProvider) SetNext(chain application.ExchangeChain) {
-	c.next = chain
 }
 
 func (c *coinbaseProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {

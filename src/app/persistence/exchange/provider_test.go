@@ -15,13 +15,13 @@ func loadEnvironment(t *testing.T) {
 	}
 }
 
-func GetCurrencyRateTest(chain application.ExchangeChain, t *testing.T) {
+func GetCurrencyRateTest(provider application.ExchangeProvider, t *testing.T) {
 	pair := &model.CurrencyPair{
 		BaseCurrency:  "BTC",
 		QuoteCurrency: "UAH",
 	}
 
-	rate, err := chain.GetCurrencyRate(pair)
+	rate, err := provider.GetCurrencyRate(pair)
 
 	require.NoError(t, err)
 	require.Equal(t, pair.GetBaseCurrency(), rate.GetBaseCurrency())

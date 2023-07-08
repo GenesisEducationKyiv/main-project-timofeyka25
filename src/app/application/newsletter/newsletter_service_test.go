@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewsletterService_SendEmails(t *testing.T) {
-	type mockBehavior func(mockExchangeChain *mocks.MockExchangeChain,
+	type mockBehavior func(mockExchangeProvider *mocks.MockExchangeProvider,
 		mockNewsletterSender *mocks.MockNewsletterSender,
 		mockEmailStorage *mocks.MockEmailStorage,
 		mockExchangeResp *model.CurrencyRate,
@@ -36,13 +36,13 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 			},
 			mockNewsletterResponse: []string{"abc@test.com"},
 			mockBehavior: func(
-				mockExchangeChain *mocks.MockExchangeChain,
+				mockExchangeProvider *mocks.MockExchangeProvider,
 				mockNewsletterSender *mocks.MockNewsletterSender,
 				mockEmailStorage *mocks.MockEmailStorage,
 				mockExchangeResp *model.CurrencyRate,
 				mockNewsletterResp []string,
 			) {
-				mockExchangeChain.EXPECT().GetCurrencyRate(&model.CurrencyPair{
+				mockExchangeProvider.EXPECT().GetCurrencyRate(&model.CurrencyPair{
 					BaseCurrency:  "BTC",
 					QuoteCurrency: "UAH",
 				}).Return(mockExchangeResp, nil)
@@ -57,13 +57,13 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 		{
 			name: "any error case",
 			mockBehavior: func(
-				mockExchangeChain *mocks.MockExchangeChain,
+				mockExchangeProvider *mocks.MockExchangeProvider,
 				mockNewsletterSender *mocks.MockNewsletterSender,
 				mockEmailStorage *mocks.MockEmailStorage,
 				mockExchangeResp *model.CurrencyRate,
 				mockNewsletterResp []string,
 			) {
-				mockExchangeChain.EXPECT().GetCurrencyRate(&model.CurrencyPair{
+				mockExchangeProvider.EXPECT().GetCurrencyRate(&model.CurrencyPair{
 					BaseCurrency:  "BTC",
 					QuoteCurrency: "UAH",
 				}).Return(nil,
@@ -79,11 +79,11 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockNewsletterSender := mocks.NewMockNewsletterSender(ctrl)
-			mockExchangeChain := mocks.NewMockExchangeChain(ctrl)
+			mockExchangeProvider := mocks.NewMockExchangeProvider(ctrl)
 			mockEmailRepository := mocks.NewMockEmailStorage(ctrl)
 
 			newsletterTestService := NewNewsletterService(
-				mockExchangeChain,
+				mockExchangeProvider,
 				mockEmailRepository,
 				mockNewsletterSender,
 				&model.CurrencyPair{
@@ -92,7 +92,7 @@ func TestNewsletterService_SendEmails(t *testing.T) {
 				})
 
 			c.mockBehavior(
-				mockExchangeChain,
+				mockExchangeProvider,
 				mockNewsletterSender,
 				mockEmailRepository,
 				c.mockExchangeResponse,

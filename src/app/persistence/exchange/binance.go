@@ -11,7 +11,7 @@ import (
 
 type BinanceFactory struct{}
 
-func (f BinanceFactory) CreateBinanceFactory() application.ExchangeChain {
+func (f BinanceFactory) CreateBinanceFactory() application.ExchangeProvider {
 	return &binanceProvider{
 		binanceURL: config.Get().BinanceURL,
 	}
@@ -19,20 +19,16 @@ func (f BinanceFactory) CreateBinanceFactory() application.ExchangeChain {
 
 type binanceProvider struct {
 	binanceURL string
-	next       application.ExchangeChain
+	next       application.ExchangeProvider
 }
 
 func (b *binanceProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := b.getCurrencyRate(pair)
-	if err != nil && b.next != nil {
-		return b.next.GetCurrencyRate(pair)
+	if err != nil {
+		return nil, err
 	}
 
 	return rate, nil
-}
-
-func (b *binanceProvider) SetNext(chain application.ExchangeChain) {
-	b.next = chain
 }
 
 func (b *binanceProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {

@@ -9,7 +9,7 @@ import (
 
 type CoingeckoFactory struct{}
 
-func (f CoingeckoFactory) CreateCoingeckoFactory() application.ExchangeChain {
+func (f CoingeckoFactory) CreateCoingeckoFactory() application.ExchangeProvider {
 	return &coingeckoProvider{
 		coingeckoURL: config.Get().CoingeckoURL,
 	}
@@ -17,20 +17,16 @@ func (f CoingeckoFactory) CreateCoingeckoFactory() application.ExchangeChain {
 
 type coingeckoProvider struct {
 	coingeckoURL string
-	next         application.ExchangeChain
+	next         application.ExchangeProvider
 }
 
 func (c *coingeckoProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := c.getCurrencyRate(pair)
-	if err != nil && c.next != nil {
-		return c.next.GetCurrencyRate(pair)
+	if err != nil {
+		return nil, err
 	}
 
 	return rate, nil
-}
-
-func (c *coingeckoProvider) SetNext(chain application.ExchangeChain) {
-	c.next = chain
 }
 
 func (c *coingeckoProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {

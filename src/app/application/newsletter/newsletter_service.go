@@ -10,28 +10,28 @@ import (
 )
 
 type newsletterService struct {
-	exchangeChain application.ExchangeChain
-	storage       application.EmailStorage
-	sender        application.NewsletterSender
-	pair          *model.CurrencyPair
+	exchangeProvider application.ExchangeProvider
+	storage          application.EmailStorage
+	sender           application.NewsletterSender
+	pair             *model.CurrencyPair
 }
 
 func NewNewsletterService(
-	exchangeChain application.ExchangeChain,
+	exchangeProvider application.ExchangeProvider,
 	storage application.EmailStorage,
 	sender application.NewsletterSender,
 	pair *model.CurrencyPair,
 ) domain.NewsletterService {
 	return &newsletterService{
-		exchangeChain: exchangeChain,
-		storage:       storage,
-		sender:        sender,
-		pair:          pair,
+		exchangeProvider: exchangeProvider,
+		storage:          storage,
+		sender:           sender,
+		pair:             pair,
 	}
 }
 
 func (s *newsletterService) SendCurrencyRate() ([]string, error) {
-	rate, err := s.exchangeChain.GetCurrencyRate(s.pair)
+	rate, err := s.exchangeProvider.GetCurrencyRate(s.pair)
 	if err != nil {
 		return nil, errors.Wrap(err, "get rate")
 	}

@@ -10,6 +10,7 @@ test:
 e2e_test:
 	go run src/cmd/main.go --test=true & \
         PID=$$!; \
+        sleep 5; \
       	go test ./tests/e2e/... -v; \
         kill $$PID
 
