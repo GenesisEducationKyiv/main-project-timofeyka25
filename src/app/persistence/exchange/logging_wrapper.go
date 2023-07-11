@@ -11,7 +11,8 @@ type loggingWrapper struct {
 	logger   application.ExchangeLogger
 }
 
-func NewLoggingWrapper(provider application.ExchangeProvider, logger application.ExchangeLogger) application.ExchangeProvider {
+func NewLoggingWrapper(provider application.ExchangeProvider,
+	logger application.ExchangeLogger) application.ExchangeProvider {
 	return &loggingWrapper{
 		provider: provider,
 		logger:   logger,

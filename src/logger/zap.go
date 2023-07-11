@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"genesis-test/src/app/domain/logger"
 	"os"
 	"path/filepath"
 
@@ -8,10 +9,10 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func NewZapLogger(path string) Logger {
+func NewZapLogger(path string) logger.Logger {
 	core := setupDefaultZapCore(path)
-	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
-	return logger.Sugar()
+	newLogger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+	return newLogger.Sugar()
 }
 
 func setupDefaultZapCore(path string) zapcore.Core {
