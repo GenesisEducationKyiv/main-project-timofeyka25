@@ -1,6 +1,6 @@
 FROM golang:latest
 
-LABEL mainteiner="genesis-mailer"
+LABEL mainteiner="rate-service"
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY go.sum .
 
 RUN go mod download
 
-COPY . .
+COPY .. .
 
 RUN go build -o main src/cmd/main.go
 
