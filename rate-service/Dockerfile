@@ -1,19 +1,14 @@
-FROM golang:latest
-
-LABEL mainteiner="rate-service"
-
+# Build stage
+FROM golang:1.20-alpine as build
+LABEL maintainer="rate-service"
 WORKDIR /app
-
-COPY go.mod .
-
-COPY go.sum .
-
+COPY . .
 RUN go mod download
-
-COPY .. .
-
 RUN go build -o main src/cmd/main.go
 
-RUN find . -name "*.go" -type f -delete
-
+# Final stage
+FROM alpine:latest
+WORKDIR /
+COPY --from=build /app/main /main
+COPY .env .env
 CMD ["./main"]

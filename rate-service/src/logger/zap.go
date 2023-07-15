@@ -1,36 +1,44 @@
 package logger
 
 import (
-	"genesis-test/src/app/domain/logger"
-	"os"
-	"path/filepath"
-
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"log"
 )
 
-func NewZapLogger(path string) logger.Logger {
-	core := setupDefaultZapCore(path)
-	newLogger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
-	return newLogger.Sugar()
+type ZapLogger struct {
+	logger *zap.SugaredLogger
 }
 
-func setupDefaultZapCore(path string) zapcore.Core {
-	config := zap.NewProductionEncoderConfig()
-	config.EncodeTime = zapcore.ISO8601TimeEncoder
-	fileEncoder := zapcore.NewJSONEncoder(config)
-	consoleEncoder := zapcore.NewConsoleEncoder(config)
-
-	dir := filepath.Dir(path)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		_ = os.MkdirAll(dir, os.ModePerm)
+func NewZapLogger(path string) *ZapLogger {
+	logger, err := setupDefaultZapLogger(path)
+	if err != nil {
+		log.Println(err.Error(), "failed to create new zap logger")
+		return nil
 	}
-	permissionCode := 0o644
-	logFile, _ := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.FileMode(permissionCode))
-	writer := zapcore.AddSync(logFile)
 
-	return zapcore.NewTee(
-		zapcore.NewCore(fileEncoder, writer, zapcore.DebugLevel),
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), zapcore.DebugLevel),
-	)
+	return &ZapLogger{
+		logger: logger.Sugar(),
+	}
+}
+
+func (l *ZapLogger) Debug(msg string) {
+	l.logger.Debug(msg)
+}
+
+func (l *ZapLogger) Info(msg string) {
+	l.logger.Info(msg)
+}
+
+func (l *ZapLogger) Error(msg string) {
+	l.logger.Error(msg)
+}
+
+func setupDefaultZapLogger(path string) (*zap.Logger, error) {
+	config := zap.NewProductionConfig()
+	config.OutputPaths = []string{path}
+	logger, err := config.Build()
+	if err != nil {
+		return nil, err
+	}
+	return logger, nil
 }
