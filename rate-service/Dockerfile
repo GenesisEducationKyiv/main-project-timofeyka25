@@ -11,4 +11,5 @@ FROM alpine:latest
 WORKDIR /
 COPY --from=build /app/main /main
 COPY .env .env
+COPY src/storage/csv src/storage/csv
 CMD ["./main"]

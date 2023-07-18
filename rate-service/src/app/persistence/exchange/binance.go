@@ -2,7 +2,6 @@ package exchange
 
 import (
 	"fmt"
-	"genesis-test/src/app/application"
 	"genesis-test/src/app/domain/model"
 	"genesis-test/src/app/utils"
 	"genesis-test/src/config"
@@ -11,17 +10,17 @@ import (
 
 type BinanceFactory struct{}
 
-func (f BinanceFactory) CreateBinanceFactory() application.ExchangeProvider {
-	return &binanceProvider{
+type BinanceProvider struct {
+	binanceURL string
+}
+
+func (f BinanceFactory) CreateBinanceFactory() *BinanceProvider {
+	return &BinanceProvider{
 		binanceURL: config.Get().BinanceURL,
 	}
 }
 
-type binanceProvider struct {
-	binanceURL string
-}
-
-func (b *binanceProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
+func (b *BinanceProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := b.getCurrencyRate(pair)
 	if err != nil {
 		return nil, err
@@ -30,7 +29,7 @@ func (b *binanceProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.Curr
 	return rate, nil
 }
 
-func (b *binanceProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
+func (b *BinanceProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	resp, err := b.doRequest(pair)
 	if err != nil {
 		return nil, err
@@ -38,7 +37,7 @@ func (b *binanceProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.Curr
 	return resp.toDefaultRate()
 }
 
-func (b *binanceProvider) doRequest(pair *model.CurrencyPair) (*binanceResponse, error) {
+func (b *BinanceProvider) doRequest(pair *model.CurrencyPair) (*binanceResponse, error) {
 	url := fmt.Sprintf(
 		b.binanceURL,
 		pair.GetBaseCurrency(),

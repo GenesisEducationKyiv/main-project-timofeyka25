@@ -2,32 +2,35 @@ package route
 
 import (
 	_ "genesis-test/docs" //nolint:revive
-	"genesis-test/src/app/api"
-	"genesis-test/src/app/presentation/http"
-	"genesis-test/src/app/presentation/http/middleware"
-	"genesis-test/src/app/presentation/http/presenter"
 
 	"github.com/gofiber/fiber/v2"
 	swagger "github.com/swaggo/fiber-swagger"
 )
 
-func InitRoutes(app *fiber.App) {
-	newPersistence := api.CreatePersistence()
-	newServices := api.CreateServices(newPersistence)
+type NewsletterHandler interface {
+	SendEmails(c *fiber.Ctx) error
+}
 
-	jsonPresenter := presenter.NewJSONPresenter()
-	newsletterHandler := http.NewNewsletterHandler(newServices.Newsletter, jsonPresenter)
-	exchangeHandler := http.NewExchangeHandler(newServices.Exchange, jsonPresenter)
-	subscriptionHandler := http.NewSubscriptionHandler(newServices.Subscription, jsonPresenter)
+type SubscriptionHandler interface {
+	Subscribe(c *fiber.Ctx) error
+}
 
-	middleware.FiberMiddleware(app)
+type ExchangeHandler interface {
+	GetCurrencyRate(c *fiber.Ctx) error
+}
 
-	apiGroup := app.Group("/api")
+func RegisterExchangeHandler(app *fiber.App, h ExchangeHandler) {
+	app.Get("/api/rate", h.GetCurrencyRate)
+}
 
-	apiGroup.Get("/rate", exchangeHandler.GetCurrencyRate)
+func RegisterNewsletterHandler(app *fiber.App, h NewsletterHandler) {
+	app.Post("/api/sendEmails", h.SendEmails)
+}
 
-	apiGroup.Post("/sendEmails", newsletterHandler.SendEmails)
-	apiGroup.Post("/subscribe", subscriptionHandler.Subscribe)
+func RegisterSubscriptionHandler(app *fiber.App, h SubscriptionHandler) {
+	app.Post("/api/subscribe", h.Subscribe)
+}
 
+func RegisterSwaggerHandler(app *fiber.App) {
 	app.Get("/swagger/*", swagger.WrapHandler)
 }

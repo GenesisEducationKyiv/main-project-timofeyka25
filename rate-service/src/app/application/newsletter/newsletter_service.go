@@ -2,27 +2,38 @@ package newsletter
 
 import (
 	"fmt"
-	"genesis-test/src/app/application"
-	"genesis-test/src/app/domain"
 	"genesis-test/src/app/domain/model"
 
 	"github.com/pkg/errors"
 )
 
-type newsletterService struct {
-	exchangeProvider application.ExchangeProvider
-	storage          application.EmailStorage
-	sender           application.NewsletterSender
+type ExchangeProvider interface {
+	GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error)
+}
+
+type EmailStorage interface {
+	GetAllEmails() ([]string, error)
+	AddEmail(newEmail string) error
+}
+
+type NewsletterSender interface {
+	MultipleSending(subscribers []string, message *model.EmailMessage) ([]string, error)
+}
+
+type NewsletterService struct {
+	exchangeProvider ExchangeProvider
+	storage          EmailStorage
+	sender           NewsletterSender
 	pair             *model.CurrencyPair
 }
 
 func NewNewsletterService(
-	exchangeProvider application.ExchangeProvider,
-	storage application.EmailStorage,
-	sender application.NewsletterSender,
+	exchangeProvider ExchangeProvider,
+	storage EmailStorage,
+	sender NewsletterSender,
 	pair *model.CurrencyPair,
-) domain.NewsletterService {
-	return &newsletterService{
+) *NewsletterService {
+	return &NewsletterService{
 		exchangeProvider: exchangeProvider,
 		storage:          storage,
 		sender:           sender,
@@ -30,7 +41,7 @@ func NewNewsletterService(
 	}
 }
 
-func (s *newsletterService) SendCurrencyRate() ([]string, error) {
+func (s *NewsletterService) SendCurrencyRate() ([]string, error) {
 	rate, err := s.exchangeProvider.GetCurrencyRate(s.pair)
 	if err != nil {
 		return nil, errors.Wrap(err, "get rate")
@@ -39,7 +50,7 @@ func (s *newsletterService) SendCurrencyRate() ([]string, error) {
 	return s.sendToSubscribed(s.buildMessage(rate))
 }
 
-func (s *newsletterService) sendToSubscribed(message *model.EmailMessage) ([]string, error) {
+func (s *NewsletterService) sendToSubscribed(message *model.EmailMessage) ([]string, error) {
 	subscribers, err := s.storage.GetAllEmails()
 	if err != nil {
 		return nil, errors.Wrap(err, "send to subscribed")
@@ -47,7 +58,7 @@ func (s *newsletterService) sendToSubscribed(message *model.EmailMessage) ([]str
 	return s.sender.MultipleSending(subscribers, message)
 }
 
-func (s *newsletterService) buildMessage(rate *model.CurrencyRate) *model.EmailMessage {
+func (s *NewsletterService) buildMessage(rate *model.CurrencyRate) *model.EmailMessage {
 	return &model.EmailMessage{
 		Subject: "Crypto Exchange Newsletter",
 		Body: fmt.Sprintf("The current exchange rate of %s to %s is %f %s",

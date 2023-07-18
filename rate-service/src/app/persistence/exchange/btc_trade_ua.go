@@ -1,7 +1,6 @@
 package exchange
 
 import (
-	"genesis-test/src/app/application"
 	"genesis-test/src/app/domain/model"
 	"genesis-test/src/app/utils"
 	"genesis-test/src/config"
@@ -10,17 +9,17 @@ import (
 
 type BTCTradeUAFactory struct{}
 
-func (f BTCTradeUAFactory) CreateBTCTradeUAFactory() application.ExchangeProvider {
-	return &btcTradeUAProvider{
+type BTCTradeUAProvider struct {
+	btcTradeUAURL string
+}
+
+func (f BTCTradeUAFactory) CreateBTCTradeUAFactory() *BTCTradeUAProvider {
+	return &BTCTradeUAProvider{
 		btcTradeUAURL: config.Get().BTCTradeUAURL,
 	}
 }
 
-type btcTradeUAProvider struct {
-	btcTradeUAURL string
-}
-
-func (b *btcTradeUAProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
+func (b *BTCTradeUAProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := b.getCurrencyRate(pair)
 	if err != nil {
 		return nil, err
@@ -29,7 +28,7 @@ func (b *btcTradeUAProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.C
 	return rate, nil
 }
 
-func (b *btcTradeUAProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
+func (b *BTCTradeUAProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	resp, err := b.doRequest(pair)
 	if err != nil {
 		return nil, err
@@ -37,7 +36,7 @@ func (b *btcTradeUAProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.C
 	return resp.toDefaultRate()
 }
 
-func (b *btcTradeUAProvider) doRequest(pair *model.CurrencyPair) (*btcTradeUAResponse, error) {
+func (b *BTCTradeUAProvider) doRequest(pair *model.CurrencyPair) (*btcTradeUAResponse, error) {
 	rate := new(btcTradeUAResponse)
 	err := utils.GetAndParse(b.btcTradeUAURL, &rate)
 	if err != nil {

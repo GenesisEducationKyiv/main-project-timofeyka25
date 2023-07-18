@@ -11,3 +11,9 @@ type ResponsePresenter interface {
 	PresentSendRate(c *fiber.Ctx, r *response.SendRateResponse) error
 	PresentError(c *fiber.Ctx, r *response.ErrorResponse) error
 }
+
+type Logger interface {
+	Info(msg string)
+	Debug(msg string)
+	Error(msg string)
+}

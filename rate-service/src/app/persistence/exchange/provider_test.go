@@ -1,7 +1,6 @@
 package exchange
 
 import (
-	"genesis-test/src/app/application"
 	"genesis-test/src/app/domain/model"
 	"testing"
 
@@ -15,7 +14,7 @@ func loadEnvironment(t *testing.T) {
 	}
 }
 
-func GetCurrencyRateTest(provider application.ExchangeProvider, t *testing.T) {
+func GetCurrencyRateTest(provider ExchangeProvider, t *testing.T) {
 	pair := &model.CurrencyPair{
 		BaseCurrency:  "BTC",
 		QuoteCurrency: "UAH",

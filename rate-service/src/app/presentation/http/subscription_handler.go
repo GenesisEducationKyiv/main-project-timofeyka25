@@ -2,7 +2,6 @@ package http
 
 import (
 	"genesis-test/src/app/customerror"
-	"genesis-test/src/app/domain"
 	"genesis-test/src/app/domain/model"
 	"genesis-test/src/app/presentation/http/response"
 	"net/mail"
@@ -11,15 +10,25 @@ import (
 	"github.com/pkg/errors"
 )
 
-type SubscriptionHandler struct {
-	service   domain.SubscriptionService
-	presenter ResponsePresenter
+type SubscriptionService interface {
+	Subscribe(subscriber *model.Subscriber) error
 }
 
-func NewSubscriptionHandler(s domain.SubscriptionService, p ResponsePresenter) *SubscriptionHandler {
+type SubscriptionHandler struct {
+	service   SubscriptionService
+	presenter ResponsePresenter
+	logger    Logger
+}
+
+func NewSubscriptionHandler(
+	s SubscriptionService,
+	p ResponsePresenter,
+	l Logger,
+) *SubscriptionHandler {
 	return &SubscriptionHandler{
 		service:   s,
 		presenter: p,
+		logger:    l,
 	}
 }
 
@@ -38,6 +47,7 @@ func (h *SubscriptionHandler) Subscribe(c *fiber.Ctx) error {
 	subscriber := new(model.Subscriber)
 
 	if err := c.BodyParser(subscriber); err != nil {
+		h.logger.Error(err.Error())
 		return h.presenter.PresentError(c.Status(fiber.StatusBadRequest),
 			&response.ErrorResponse{
 				Message: err.Error(),
@@ -45,6 +55,7 @@ func (h *SubscriptionHandler) Subscribe(c *fiber.Ctx) error {
 	}
 
 	if _, err := mail.ParseAddress(subscriber.Email); err != nil {
+		h.logger.Error(err.Error())
 		return h.presenter.PresentError(c.Status(fiber.StatusBadRequest),
 			&response.ErrorResponse{
 				Message: err.Error(),
@@ -53,6 +64,7 @@ func (h *SubscriptionHandler) Subscribe(c *fiber.Ctx) error {
 
 	err := h.service.Subscribe(subscriber)
 	if err != nil {
+		h.logger.Error(err.Error())
 		if errors.Is(err, customerror.ErrAlreadyExists) {
 			return c.SendStatus(fiber.StatusConflict)
 		}

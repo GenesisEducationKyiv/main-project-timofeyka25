@@ -6,11 +6,12 @@ import (
 	"context"
 	"fmt"
 	"genesis-test/src/config"
-	amqp "github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
 	"io"
 	"log"
 	"net/url"
+
+	amqp "github.com/rabbitmq/amqp091-go"
+	"go.uber.org/zap"
 )
 
 type customWriter struct {

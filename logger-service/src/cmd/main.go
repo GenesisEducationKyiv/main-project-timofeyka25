@@ -1,8 +1,9 @@
 package main
 
 import (
+	"logger-service/src/rabbitmq"
+
 	_ "github.com/joho/godotenv/autoload"
-	rabbitmq "logger-service/src/rabbitmq"
 )
 
 func main() {

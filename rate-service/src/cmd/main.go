@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"genesis-test/src/app/presentation/http/route"
+	"genesis-test/src/app/api"
 	"genesis-test/src/app/presentation/http/server"
 	"genesis-test/src/config"
 	"log"
@@ -23,7 +23,7 @@ func main() {
 	}
 	app := fiber.New(config.FiberConfig())
 
-	route.InitRoutes(app)
+	api.BuildApp(app)
 	server.StartServerWithGracefulShutdown(app)
 }
 

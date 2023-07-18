@@ -1,7 +1,6 @@
 package http
 
 import (
-	"genesis-test/src/app/domain"
 	"genesis-test/src/app/domain/model"
 	"genesis-test/src/app/presentation/http/response"
 	"genesis-test/src/config"
@@ -9,15 +8,25 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type ExchangeHandler struct {
-	service   domain.ExchangeService
-	presenter ResponsePresenter
+type ExchangeService interface {
+	GetCurrencyRate(pair *model.CurrencyPair) (float64, error)
 }
 
-func NewExchangeHandler(s domain.ExchangeService, p ResponsePresenter) *ExchangeHandler {
+type ExchangeHandler struct {
+	service   ExchangeService
+	presenter ResponsePresenter
+	logger    Logger
+}
+
+func NewExchangeHandler(
+	s ExchangeService,
+	p ResponsePresenter,
+	l Logger,
+) *ExchangeHandler {
 	return &ExchangeHandler{
 		service:   s,
 		presenter: p,
+		logger:    l,
 	}
 }
 
@@ -37,10 +46,10 @@ func (h *ExchangeHandler) GetCurrencyRate(c *fiber.Ctx) error {
 	}
 	rate, err := h.service.GetCurrencyRate(pair)
 	if err != nil {
+		h.logger.Error(err.Error())
 		return h.presenter.PresentError(c.Status(fiber.StatusBadRequest), &response.ErrorResponse{
 			Message: err.Error(),
 		})
 	}
-
 	return h.presenter.PresentExchangeRate(c, &response.RateResponse{Rate: rate})
 }

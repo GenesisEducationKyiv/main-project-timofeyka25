@@ -1,23 +1,26 @@
 package subscription
 
 import (
-	"genesis-test/src/app/application"
 	"genesis-test/src/app/customerror"
-	"genesis-test/src/app/domain"
 	"genesis-test/src/app/domain/model"
 )
 
-type subscriptionService struct {
-	storage application.EmailStorage
+type EmailStorage interface {
+	GetAllEmails() ([]string, error)
+	AddEmail(newEmail string) error
 }
 
-func NewSubscriptionService(storage application.EmailStorage) domain.SubscriptionService {
-	return &subscriptionService{
+type SubscriptionService struct {
+	storage EmailStorage
+}
+
+func NewSubscriptionService(storage EmailStorage) *SubscriptionService {
+	return &SubscriptionService{
 		storage: storage,
 	}
 }
 
-func (s subscriptionService) Subscribe(subscriber *model.Subscriber) error {
+func (s SubscriptionService) Subscribe(subscriber *model.Subscriber) error {
 	if subscriber == nil {
 		return customerror.ErrNoDataProvided
 	}

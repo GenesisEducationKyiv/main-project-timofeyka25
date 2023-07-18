@@ -5,12 +5,15 @@
 package mocks
 
 import (
-	service "genesis-test/src/app/application"
 	"genesis-test/src/app/domain/model"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
 )
+
+type ExchangeProvider interface {
+	GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error)
+}
 
 // MockNewsletterSender is a mock of NewsletterSender interface.
 type MockNewsletterSender struct {
@@ -141,7 +144,7 @@ func (mr *MockExchangeProviderMockRecorder) GetCurrencyRate(arg0 interface{}) *g
 }
 
 // SetNext mocks base method.
-func (m *MockExchangeProvider) SetNext(arg0 service.ExchangeProvider) {
+func (m *MockExchangeProvider) SetNext(arg0 ExchangeProvider) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetNext", arg0)
 }

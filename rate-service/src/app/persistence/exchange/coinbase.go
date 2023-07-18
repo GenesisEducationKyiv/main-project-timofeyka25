@@ -2,7 +2,6 @@ package exchange
 
 import (
 	"fmt"
-	"genesis-test/src/app/application"
 	"genesis-test/src/app/domain/model"
 	"genesis-test/src/app/utils"
 	"genesis-test/src/config"
@@ -11,14 +10,14 @@ import (
 
 type CoinbaseFactory struct{}
 
-func (f CoinbaseFactory) CreateCoinbaseFactory() application.ExchangeProvider {
-	return &coinbaseProvider{
-		coinbaseURL: config.Get().CoinbaseURL,
-	}
+type CoinbaseProvider struct {
+	coinbaseURL string
 }
 
-type coinbaseProvider struct {
-	coinbaseURL string
+func (f CoinbaseFactory) CreateCoinbaseFactory() *CoinbaseProvider {
+	return &CoinbaseProvider{
+		coinbaseURL: config.Get().CoinbaseURL,
+	}
 }
 
 type coinbaseResponse struct {
@@ -29,7 +28,7 @@ type coinbaseResponse struct {
 	} `json:"data"`
 }
 
-func (c *coinbaseProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
+func (c *CoinbaseProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := c.getCurrencyRate(pair)
 	if err != nil {
 		return nil, err
@@ -38,7 +37,7 @@ func (c *coinbaseProvider) GetCurrencyRate(pair *model.CurrencyPair) (*model.Cur
 	return rate, nil
 }
 
-func (c *coinbaseProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
+func (c *CoinbaseProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	resp, err := c.doRequest(pair)
 	if err != nil {
 		return nil, err
@@ -46,7 +45,7 @@ func (c *coinbaseProvider) getCurrencyRate(pair *model.CurrencyPair) (*model.Cur
 	return resp.toDefaultRate()
 }
 
-func (c *coinbaseProvider) doRequest(pair *model.CurrencyPair) (*coinbaseResponse, error) {
+func (c *CoinbaseProvider) doRequest(pair *model.CurrencyPair) (*coinbaseResponse, error) {
 	url := fmt.Sprintf(
 		c.coinbaseURL,
 		pair.GetBaseCurrency(),

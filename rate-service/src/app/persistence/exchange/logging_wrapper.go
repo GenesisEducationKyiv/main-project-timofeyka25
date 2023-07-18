@@ -1,25 +1,34 @@
 package exchange
 
 import (
-	"genesis-test/src/app/application"
 	"genesis-test/src/app/domain/model"
 	"reflect"
 )
 
-type loggingWrapper struct {
-	provider application.ExchangeProvider
-	logger   application.ExchangeLogger
+type ExchangeProvider interface {
+	GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error)
 }
 
-func NewLoggingWrapper(provider application.ExchangeProvider,
-	logger application.ExchangeLogger) application.ExchangeProvider {
-	return &loggingWrapper{
+type ExchangeLogger interface {
+	LogExchangeRate(provider string, rate *model.CurrencyRate)
+}
+
+type LoggingWrapper struct {
+	provider ExchangeProvider
+	logger   ExchangeLogger
+}
+
+func NewLoggingWrapper(
+	provider ExchangeProvider,
+	logger ExchangeLogger,
+) *LoggingWrapper {
+	return &LoggingWrapper{
 		provider: provider,
 		logger:   logger,
 	}
 }
 
-func (l *loggingWrapper) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
+func (l *LoggingWrapper) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := l.provider.GetCurrencyRate(pair)
 	if err != nil {
 		return nil, err
@@ -29,6 +38,6 @@ func (l *loggingWrapper) GetCurrencyRate(pair *model.CurrencyPair) (*model.Curre
 	return rate, nil
 }
 
-func (l *loggingWrapper) getProviderName() string {
+func (l *LoggingWrapper) getProviderName() string {
 	return reflect.TypeOf(l.provider).Elem().Name()
 }

@@ -1,22 +1,21 @@
 package storage
 
 import (
-	"genesis-test/src/app/application"
 	"genesis-test/src/app/customerror"
 	"genesis-test/src/app/utils"
 
 	"github.com/pkg/errors"
 )
 
-type csvRepository struct {
+type EmailStorage struct {
 	filepath string
 }
 
-func NewCsvRepository(filepath string) application.EmailStorage {
-	return &csvRepository{filepath: filepath}
+func NewCsvRepository(filepath string) *EmailStorage {
+	return &EmailStorage{filepath: filepath}
 }
 
-func (c *csvRepository) GetAllEmails() ([]string, error) {
+func (c *EmailStorage) GetAllEmails() ([]string, error) {
 	subscribed, err := utils.ReadAllFromCsvToSlice(c.filepath)
 	if len(subscribed) < 1 {
 		return nil, customerror.ErrNoSubscribers
@@ -28,7 +27,7 @@ func (c *csvRepository) GetAllEmails() ([]string, error) {
 	return subscribed, nil
 }
 
-func (c *csvRepository) AddEmail(newEmail string) error {
+func (c *EmailStorage) AddEmail(newEmail string) error {
 	emails, err := c.GetAllEmails()
 	if err != nil && !errors.Is(err, customerror.ErrNoSubscribers) {
 		return err

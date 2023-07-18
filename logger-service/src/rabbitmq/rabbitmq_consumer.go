@@ -1,10 +1,11 @@
-package rabbit_mq
+package rabbitmq
 
 import (
 	"fmt"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"logger-service/src/config"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type rabbitMQConfig struct {
