@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"genesis-test/src/app/route"
-	"genesis-test/src/app/utils"
+	"genesis-test/src/app/presentation/http/route"
+	"genesis-test/src/app/presentation/http/server"
 	"genesis-test/src/config"
 	"log"
 
@@ -24,7 +24,7 @@ func main() {
 	app := fiber.New(config.FiberConfig())
 
 	route.InitRoutes(app)
-	utils.StartServerWithGracefulShutdown(app)
+	server.StartServerWithGracefulShutdown(app)
 }
 
 func loadEnv() error {

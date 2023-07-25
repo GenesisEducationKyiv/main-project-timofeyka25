@@ -2,17 +2,25 @@
 start:
 	go run src/cmd/main.go
 
-.PHONY: start_test
-start_test:
-	go run src/cmd/main.go --test=true
+.PHONY: test
+test:
+	go test ./src/... -v
+
+.PHONY: e2e_test
+e2e_test:
+	go run src/cmd/main.go --test=true & \
+        PID=$$!; \
+        sleep 5; \
+      	go test ./tests/e2e/... -v; \
+        kill $$PID
+
+.PHONY: arch_test
+arch_test:
+	go test ./tests/architecture... -v
 
 .PHONY: gen_docs
 gen_docs:
 	swag init -g ./src/cmd/main.go -o ./docs --parseDependency --parseInternal --quiet
-
-.PHONY: test
-test:
-	go test ./... -v
 
 .PHONY: lint
 lint:

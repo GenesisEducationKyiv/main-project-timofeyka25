@@ -1,8 +1,8 @@
 package exchange
 
 import (
-	"genesis-test/src/app/domain"
-	"genesis-test/src/app/service"
+	"genesis-test/src/app/application"
+	"genesis-test/src/app/domain/model"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -15,13 +15,13 @@ func loadEnvironment(t *testing.T) {
 	}
 }
 
-func GetCurrencyRateTest(chain service.ExchangeChain, t *testing.T) {
-	pair := &domain.CurrencyPair{
+func GetCurrencyRateTest(provider application.ExchangeProvider, t *testing.T) {
+	pair := &model.CurrencyPair{
 		BaseCurrency:  "BTC",
 		QuoteCurrency: "UAH",
 	}
 
-	rate, err := chain.GetCurrencyRate(pair)
+	rate, err := provider.GetCurrencyRate(pair)
 
 	require.NoError(t, err)
 	require.Equal(t, pair.GetBaseCurrency(), rate.GetBaseCurrency())

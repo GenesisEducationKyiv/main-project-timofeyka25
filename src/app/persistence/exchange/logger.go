@@ -1,8 +1,8 @@
 package exchange
 
 import (
-	"genesis-test/src/app/domain"
-	"genesis-test/src/app/service"
+	"genesis-test/src/app/application"
+	"genesis-test/src/app/domain/model"
 	"genesis-test/src/logger"
 )
 
@@ -10,13 +10,13 @@ type exchangeLogger struct {
 	logger logger.Logger
 }
 
-func NewExchangeLogger(logger logger.Logger) service.ExchangeLogger {
+func NewExchangeLogger(logger logger.Logger) application.ExchangeLogger {
 	return &exchangeLogger{
 		logger: logger,
 	}
 }
 
-func (e exchangeLogger) LogExchangeRate(provider string, rate *domain.CurrencyRate) {
+func (e exchangeLogger) LogExchangeRate(provider string, rate *model.CurrencyRate) {
 	e.logger.Infow(
 		"received rate",
 		"provider", provider,
