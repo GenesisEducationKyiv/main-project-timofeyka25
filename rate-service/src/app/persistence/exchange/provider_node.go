@@ -17,8 +17,11 @@ func NewProviderNode(provider ExchangeProvider) *ProviderNode {
 
 func (c *ProviderNode) GetCurrencyRate(pair *model.CurrencyPair) (*model.CurrencyRate, error) {
 	rate, err := c.provider.GetCurrencyRate(pair)
-	if err != nil && c.next != nil {
-		return c.next.GetCurrencyRate(pair)
+	if err != nil {
+		if c.next != nil {
+			return c.next.GetCurrencyRate(pair)
+		}
+		return nil, err
 	}
 
 	return rate, nil
