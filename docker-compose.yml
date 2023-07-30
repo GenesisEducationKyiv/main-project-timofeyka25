@@ -1,6 +1,51 @@
 version: '3.9'
 services:
-  genesis-mailer:
-    build: .
+  rabbit-mq:
+    image: "rabbitmq:3-management-alpine"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+      - rate-app-network
+
+  rate-service:
+    build: ./rate-service
     ports:
       - "8000:8000"
+    restart: on-failure
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+    networks:
+      - rate-app-network
+
+  logger-service:
+    build: ./logger-service
+    ports:
+      - "8001:8000"
+    restart: on-failure
+    depends_on:
+      - rate-service
+    networks:
+      - rate-app-network
+
+volumes:
+  rabbit_mq:
+    driver: local
+
+networks:
+  rate-app-network:
+    driver: bridge
+    external: false
