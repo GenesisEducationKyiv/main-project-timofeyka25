@@ -1,0 +1,132 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Genesis Mailer",
+    "contact": {},
+    "version": "1.0"
+  },
+  "host": "localhost:8000",
+  "basePath": "/api",
+  "paths": {
+    "/rate": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Exchange"
+        ],
+        "summary": "Get currency rate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/src_app_handler.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/sendEmails": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "Newsletter"
+        ],
+        "summary": "Send currency rate to subscribed emails",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/fiber.Map"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/src_app_handler.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/subscribe": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "Newsletter"
+        ],
+        "summary": "Subscribe to newsletter",
+        "parameters": [
+          {
+            "description": "Email to subscribe",
+            "name": "input",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/genesis-test_src_app_domain.Subscriber"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/src_app_handler.ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/src_app_handler.ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "fiber.Map": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "genesis-test_src_app_domain.Subscriber": {
+      "type": "object",
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "src_app_handler.ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
