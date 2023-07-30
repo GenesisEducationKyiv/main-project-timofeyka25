@@ -2,8 +2,8 @@ package exchange
 
 import (
 	"genesis-test/src/app/application"
+	"genesis-test/src/app/domain/logger"
 	"genesis-test/src/app/domain/model"
-	"genesis-test/src/logger"
 )
 
 type exchangeLogger struct {
